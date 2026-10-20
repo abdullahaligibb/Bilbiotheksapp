@@ -44,7 +44,7 @@ npm.cmd run db:setup
 npm.cmd run dev
 ```
 
-Öffne http://localhost:3000. Erwartet: **Datenbank verbunden** und **Datenbankverbindung erfolgreich**.
+Öffne http://localhost:3000. Erwartet: die Überschrift **Bibliotheksapp** und der aus PostgreSQL gelesene Text **Datenbankverbindung erfolgreich**.
 
 ## Was passiert dabei?
 
@@ -53,7 +53,7 @@ npm.cmd run dev
 3. database/setup.sql erzeugt setup_check mit id und message und legt eine Testzeile an. Wiederholtes Ausführen erhält vorhandene Daten.
 4. src/lib/db.ts erzeugt einen wiederverwendeten Pool von Datenbankverbindungen. server-only verhindert den Import in Client Components.
 5. src/app/page.tsx ist eine async Server Component. Sie führt SELECT id, message FROM setup_check ORDER BY id aus und rendert die echten Ergebnisse.
-6. force-dynamic und deaktivierte Cache Components sorgen für eine frische Abfrage bei jedem Seitenabruf. Der Knopf lädt die Seite neu.
+6. force-dynamic und deaktivierte Cache Components sorgen für eine frische Abfrage bei jedem Seitenabruf. Zum erneuten Abrufen die Seite im Browser neu laden.
 
 Datenweg: Browser -> Next.js auf Windows -> PostgreSQL in Docker -> Next.js -> sichtbarer Text. Der Browser erhält kein Datenbankpasswort.
 
@@ -73,7 +73,7 @@ UPDATE setup_check SET message = 'Hallo aus meiner Datenbank!' WHERE id = 1;
 SELECT * FROM setup_check;
 ```
 
-Drücke auf der Webseite **Erneut aus der Datenbank lesen**. Der neue Text muss erscheinen. Verlasse psql mit `\q`.
+Lade die Seite im Browser neu. Der neue Text muss erscheinen. Verlasse psql mit `\q`.
 
 Zum Zurücksetzen der Nachricht:
 
@@ -117,7 +117,7 @@ npm.cmd run start
 - App Router und Server Component: direkte Datenbankabfrage auf dem Server ohne zusätzlichen API-Endpunkt.
 - pg: kleiner PostgreSQL-Treiber; SQL bleibt sichtbar und für diesen Meilenstein erklärbar. Kein ORM und keine ORM-Migrationen.
 - SQL-Skript: wiederholbarer Schemaaufbau für den Verbindungstest. Künftige Schemaänderungen sollten als versionierte Migrationen ergänzt werden.
-- CSS: einfache Gestaltung ohne zusätzliche UI-Abhängigkeit.
+- Darstellung: einfache HTML-Überschrift und Datenbanktext ohne eigenes Layout oder zusätzliches Styling.
 - ESLint: prüft typische JavaScript-, React- und Next.js-Probleme.
 - @next/env: das Setup-Skript verwendet dieselben Umgebungsdateien wie Next.js.
 - Systemschriften: der Build benötigt keinen Font-Download.
@@ -129,14 +129,16 @@ npm.cmd run start
 - Port 5432 belegt: in compose.yaml den Host-Port auf 5433 ändern und in .env.local ebenfalls localhost:5433 verwenden.
 - Passwort abgelehnt: beide Dateien vergleichen. POSTGRES_* initialisiert nur ein leeres Volume; eine Änderung in .env ändert kein bestehendes Datenbankpasswort.
 - Nach Änderungen an .env.local: Next.js mit Strg+C beenden und neu starten.
-- Verbindung prüfen: Container mit docker compose ps prüfen, dann npm.cmd run db:setup ausführen.
+- Fehler bei der Datenbankabfrage: Container mit docker compose ps prüfen, dann npm.cmd run db:setup ausführen.
 - Leere Tabelle: npm.cmd run db:setup erzeugt die Testzeile.
 - Build-Konflikt mit force-dynamic: Cache Components sind für diesen Verbindungstest ausdrücklich deaktiviert.
 - @next/env in einem .mjs-Skript: CommonJS-Defaultimport verwenden und nextEnv.loadEnvConfig aufrufen.
 
 ## Bekannte Abhängigkeitsmeldung
 
-npm audit meldete beim Einrichten fünf hohe Meldungen in einer gemeinsamen Entwicklungstool-Kette: eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces (GHSA-vfj7-8cjw-p6xm). Der automatisch vorgeschlagene Fix wäre ein Downgrade von eslint-config-next auf 14.2.35. Dieses wurde nicht angewendet, da die Konfiguration zu Next.js 16 passen soll. Vor Weiterentwicklung erneut npm.cmd audit prüfen. Dies ist kein vollständiger Sicherheitsaudit.
+Erneut geprüft am 19.10.2026: npm audit meldet weiterhin fünf hohe Einträge in einer gemeinsamen Entwicklungstool-Kette: eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces. Die Einträge gehen auf dieselbe Schwachstelle in braces 3.0.3 zurück: speziell verschachtelte Muster können den verarbeitenden Node.js-Prozess zum Absturz bringen. Laut [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) gibt es derzeit keine korrigierte Version; npm nennt 3.0.3 als neueste Version.
+
+Der automatisch vorgeschlagene Fix wäre ein Downgrade von eslint-config-next auf 14.2.35. Dieses wurde nicht angewendet, da die Konfiguration zu Next.js 16 passen soll. Die betroffene Kette gehört hier zu den Entwicklungswerkzeugen; die Seite nimmt keine Muster von Benutzern entgegen. npm.cmd audit --omit=dev meldet null bekannte Schwachstellen in den Produktionsabhängigkeiten. Das ist keine allgemeine Sicherheitsgarantie. Die Meldung bleibt offen und sollte bei späteren Updates erneut geprüft werden.
 
 ## Git und Übergabe
 
