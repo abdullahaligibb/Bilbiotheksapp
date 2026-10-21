@@ -94,7 +94,7 @@ Das Speichern läuft in einer Transaktion. Bei einem neuen Konto werden Benutzer
 
 1. Melde dich an und öffne auf der Startseite **Search books**.
 2. Gib einen Titel, Autor oder eine ISBN ein und drücke **Search**. Ein Suchfeld prüft alle drei Angaben. Ein Teil des Textes reicht aus.
-3. Die Tabelle zeigt Titel, Autor und ISBN der passenden Bücher. Ohne ISBN steht dort ein Strich.
+3. Die Tabelle zeigt Titel, Autor, ISBN und verfügbare Exemplare der passenden Bücher, zum Beispiel **2 of 4**. Ohne ISBN steht dort ein Strich.
 4. Mit **Clear search** löschst du die Suche. Ein leeres Suchfeld zeigt den Katalog.
 
 Die Suche beachtet Gross- und Kleinschreibung nicht. Bei einer ISBN kannst du Leerzeichen und Bindestriche mit eingeben. Die Webseite zeigt höchstens 100 Treffer und bittet bei weiteren Treffern um einen genaueren Suchbegriff. Wenn nichts passt, erscheint **No books found**. Der Suchbegriff darf höchstens 300 Zeichen haben.
@@ -102,6 +102,17 @@ Die Suche beachtet Gross- und Kleinschreibung nicht. Bei einer ISBN kannst du Le
 Die Suche ist für beide Rollen erreichbar. Nur die Verwaltung sieht daneben einen Link zum Bearbeiten. Ohne Anmeldung führt /books zur Loginseite. Der Suchbegriff steht als q in der Adresse, zum Beispiel /books?q=Harry. Dadurch bleibt die Suche beim Neuladen erhalten.
 
 Das Formular verwendet eine normale GET-Anfrage. Die Seite liest den Suchbegriff und fragt PostgreSQL auf dem Server ab. SQL-Platzhalter halten den Suchtext vom SQL-Befehl getrennt. POSITION prüft, ob der Text im Titel, Autor oder in der ISBN vorkommt. Prozentzeichen und Unterstriche werden als normale Zeichen behandelt. Dafür sind keine zusätzliche Suchbibliothek und keine neuen Tabellen nötig.
+
+## Verfügbare Exemplare ansehen
+
+Klicke in der Suche auf einen Buchtitel. Die Buchseite zeigt die Buchangaben und alle zugehörigen Exemplare mit Inventarnummer, Standort und Status:
+
+- **Available**: Das Exemplar hat keine aktive Ausleihe und ist verfügbar.
+- **On loan**: Das Exemplar hat eine Ausleihe ohne Rückgabedatum und ist ausgeliehen.
+
+Eine frühere, abgeschlossene Ausleihe macht ein Exemplar nicht mehr unverfügbar. Auch mehrere frühere Ausleihen werden nicht mehrfach gezählt. Eine überfällige Ausleihe bleibt aktiv, bis eine Rückgabe erfasst wurde. Ein Buch ohne Exemplare zeigt **0 of 0** und eine passende Meldung.
+
+Beide Rollen dürfen diese Angaben nach dem Anmelden sehen. Namen und E-Mail-Adressen der ausleihenden Personen werden nicht angezeigt. Nur die Verwaltung sieht den Bearbeitungslink. Die Angaben werden bei jedem neuen Seitenaufruf aus der Datenbank gelesen. Sie sind eine Anzeige des aktuellen Zustands und reservieren kein Exemplar. Die Ausleih- und Rückgabefunktionen auf der Webseite folgen später.
 
 ## Bücher und Exemplare verwalten
 
@@ -132,7 +143,8 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | Datei oder Ordner | Aufgabe |
 | --- | --- |
 | src/app/page.tsx | Liest die Testnachricht und zeigt sie an |
-| src/app/books/page.tsx | Suchformular und SQL-Abfrage nach Titel, Autor und ISBN |
+| src/app/books/page.tsx | Suchformular und SQL-Abfrage mit Anzahl verfügbarer Exemplare |
+| src/app/books/[id]/page.tsx | Buchangaben und Exemplare mit Standort und Verfügbarkeit |
 | src/app/layout.tsx | Gemeinsamer HTML-Rahmen der Seite |
 | src/lib/db.ts | Verwaltet die Verbindung zur Datenbank |
 | src/lib/auth.ts | Einstellungen von Better Auth und Rollenfeld |
@@ -170,7 +182,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 
 Ein Buch kann mehrere Exemplare haben. Eine Ausleihe gehört zu einem Benutzer und einem Exemplar. Ein Exemplar darf nur eine aktive Ausleihe haben.
 
-Die neuen Buchfelder sind vorerst optional, damit bisherige Formulare weiter funktionieren. books.borrowed bleibt für den alten Übungscode bestehen. Im geplanten Ausleihsystem wird die Verfügbarkeit aus loans berechnet.
+Die neuen Buchfelder sind vorerst optional, damit bisherige Formulare weiter funktionieren. books.borrowed bleibt für den alten Übungscode bestehen. Die aktuelle Verfügbarkeit wird aus copies und aktiven loans berechnet. Das alte Feld books.borrowed wird dafür nicht verwendet.
 
 Better Auth speichert Passwort-Hashes in auth_accounts.password_hash. Die frühere Spalte users.password_hash bleibt erhalten, wird für neue Anmeldungen aber nicht verwendet und darf leer sein. Die vorhandenen Benutzer-IDs bleiben bestehen, damit die Verbindungen zu loans weiter passen.
 

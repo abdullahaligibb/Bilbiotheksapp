@@ -265,3 +265,34 @@ Das sind Browser- und Integrationstests gegen die laufende App und die Datenbank
 Für die Präsentation:
 
 "Mein Suchformular schickt den Suchbegriff in der Adresse an den Server. Dort prüfe ich die Anmeldung und suche mit SQL in Titel, Autor und ISBN. Die Datenbank liefert die passenden Bücher. Ich brauche dafür keine eigene Suchbibliothek."
+
+## 21.10.2026: Verfügbare Exemplare anzeigen
+
+### Was wurde gemacht?
+
+- Die Suchergebnisse zeigen verfügbare Exemplare und Gesamtzahl, zum Beispiel 2 of 4.
+- Ein Klick auf den Buchtitel öffnet /books/[id]. Dort stehen die Buchangaben und alle Exemplare mit Inventarnummer, Standort und Status.
+- Available bedeutet verfügbar. On loan bedeutet ausgeliehen.
+- Ohne Exemplare oder ohne verfügbare Exemplare erscheint eine passende Meldung.
+- Beide Rollen dürfen diese Seiten nach dem Anmelden sehen. Angaben zu den ausleihenden Personen werden nicht angezeigt.
+- Die bestehenden Tabellen reichen aus. Es gibt kein neues Paket und keine Migration.
+
+### Wie wird die Verfügbarkeit bestimmt?
+
+Die SQL-Abfrage verbindet books mit copies und den aktiven loans. Aktiv ist eine Ausleihe, wenn returned_at leer ist. Gibt es für ein Exemplar keine solche Ausleihe, ist es verfügbar. Die Suchseite zählt diese Exemplare. Die Buchseite zeigt ihren Status und Standort.
+
+Frühere Ausleihen mit einem Rückgabedatum werden nicht berücksichtigt. Dadurch bleibt ein zurückgegebenes Exemplar verfügbar, auch wenn es früher schon mehrmals ausgeliehen wurde. Eine überschrittene Frist allein macht ein Exemplar nicht wieder verfügbar. Es muss zuerst zurückgegeben werden. Das alte Feld books.borrowed wird nicht für die Berechnung verwendet.
+
+Die Buchseite liest die Exemplare bei einem neuen Aufruf erneut. Eine Anzeige reserviert noch nichts. Die eigentliche Ausleihe mit erneuter Prüfung der Verfügbarkeit folgt in einem späteren Schritt.
+
+### Was wurde geprüft?
+
+22 gezielte Prüfungen bestanden: Bücher ohne Exemplare, vollständig ausgeliehene Bücher, gemischte Verfügbarkeit, ein noch nie ausgeliehenes Exemplar, mehrere abgeschlossene Ausleihen desselben Exemplars und eine überfällige aktive Ausleihe. Die Anzeige änderte sich nach einer Rückgabe in den Testdaten beim Neuladen korrekt. Suchübersicht und Buchseite zeigten passende Anzahlen.
+
+Die Navigation im Browser, Standorte, beide Rollen, der Verwaltungslink und die Sperre für nicht angemeldete Besucher wurden ebenfalls geprüft. Ungültige und unbekannte Buch-IDs ergaben eine 404-Seite. Es wurden keine Angaben zu ausleihenden Personen angezeigt und keine JavaScript-Fehler gemeldet.
+
+Die Prüfungen verwendeten nur eigens angelegte Bücher, Exemplare und Ausleihen. Diese Testdaten wurden danach entfernt. Die bestehenden Buch-, Exemplar- und Ausleihdaten blieben laut Prüfsummen unverändert. Lint, TypeScript und Produktionsbuild bestanden. Die dauerhafte Testsuite folgt am Ende.
+
+Für die Präsentation:
+
+"Ein Buch kann mehrere Exemplare haben. Ich prüfe für jedes Exemplar, ob es eine Ausleihe ohne Rückgabedatum gibt. Wenn nicht, ist es verfügbar. Deshalb muss ich keinen zweiten Verfügbarkeitswert speichern, der veralten könnte."

@@ -4,7 +4,14 @@ import { requireUser } from '@/lib/require-user';
 
 export const dynamic = 'force-dynamic';
 
-type SearchBook = { id: number; title: string; author: string; isbn: string | null };
+type SearchBook = {
+  id: number;
+  title: string;
+  author: string;
+  isbn: string | null;
+  total_copies: number;
+  available_copies: number;
+};
 type PageProps = { searchParams: Promise<{ q?: string | string[] }> };
 
 export default async function BookSearchPage({ searchParams }: PageProps) {
@@ -21,13 +28,18 @@ export default async function BookSearchPage({ searchParams }: PageProps) {
     // Our book form saves ISBNs without spaces or hyphens.
     const isbnSearch = search.replace(/[\s-]/g, '');
     const result = await getPool().query<SearchBook>(
-      `SELECT id, title, author, isbn
+      `SELECT books.id, books.title, books.author, books.isbn,
+              COUNT(copies.id)::integer AS total_copies,
+              (COUNT(copies.id) FILTER (WHERE loans.id IS NULL))::integer AS available_copies
        FROM books
+       LEFT JOIN copies ON copies.book_id = books.id
+       LEFT JOIN loans ON loans.copy_id = copies.id AND loans.returned_at IS NULL
        WHERE $1 = ''
           OR POSITION(LOWER($1) IN LOWER(title)) > 0
           OR POSITION(LOWER($1) IN LOWER(author)) > 0
           OR ($2 <> '' AND POSITION(LOWER($2) IN LOWER(COALESCE(isbn, ''))) > 0)
-       ORDER BY title, id
+       GROUP BY books.id
+       ORDER BY books.title, books.id
        LIMIT 101`,
       [search, isbnSearch],
     );
@@ -48,6 +60,7 @@ export default async function BookSearchPage({ searchParams }: PageProps) {
         <button>Search</button>
       </form>
       <p>Enter part of a title, author or ISBN. Leave the search empty to browse books.</p>
+      <p>Open a book to see its copies and locations. A copy is available when it has no active loan.</p>
       <p><Link href="/books">Clear search</Link></p>
       {error ? <p role="alert">{error}</p> : (
         <>
@@ -60,15 +73,17 @@ export default async function BookSearchPage({ searchParams }: PageProps) {
                   <th scope="col">Title</th>
                   <th scope="col">Author</th>
                   <th scope="col">ISBN</th>
+                  <th scope="col">Available copies</th>
                   {user.role === 'admin' && <th scope="col">Edit</th>}
                 </tr>
               </thead>
               <tbody>{books.map(function (book) {
                 return (
                   <tr key={book.id}>
-                    <td>{book.title}</td>
+                    <td><Link href={`/books/${book.id}`}>{book.title}</Link></td>
                     <td>{book.author}</td>
                     <td>{book.isbn ?? '—'}</td>
+                    <td>{book.available_copies} of {book.total_copies}</td>
                     {user.role === 'admin' && <td><Link href={`/admin/books/${book.id}`}>Edit {book.title}</Link></td>}
                   </tr>
                 );
