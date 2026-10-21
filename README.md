@@ -2,7 +2,7 @@
 
 Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten sowie Rückgaben erfassen. Alle angemeldeten Benutzer können nach Büchern suchen, verfügbare Exemplare für sich ausleihen und ihre aktiven Ausleihen ansehen.
+Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten sowie Rückgaben erfassen. Alle angemeldeten Benutzer können nach Büchern suchen, verfügbare Exemplare für sich ausleihen und ihre eigenen Ausleihen ansehen. Überfällige Ausleihen werden markiert. Die Verwaltung kann alle überfälligen Exemplare auflisten.
 
 ## Verwendete Werkzeuge
 
@@ -123,11 +123,27 @@ Beide Rollen dürfen diese Angaben nach dem Anmelden sehen. Namen und E-Mail-Adr
 
 Beide Rollen können für sich selbst ausleihen. Der Benutzer wird aus der geprüften Sitzung gelesen. Ausleihdatum und Frist werden von PostgreSQL gesetzt. Das Formular kann weder einen anderen Benutzer noch eigene Datumswerte vorgeben. Die Frist beträgt vorerst 30 Tage und muss noch mit der Betreuung bestätigt werden.
 
-Jede Ausleihe ist eine neue Zeile in loans. returned_at bleibt leer, solange das Exemplar nicht zurückgegeben wurde. Ein ausgeliehenes Exemplar wird in der Buchansicht als On loan angezeigt und hat keinen Ausleihbutton mehr. Unter /loans sieht jeder nur seine eigenen aktiven Ausleihen, auch wenn er andere Benutzer-IDs in der Adresse eingibt. Die Seite ist auch über den Link My loans auf der Startseite erreichbar.
+Jede Ausleihe ist eine neue Zeile in loans. returned_at bleibt leer, solange das Exemplar nicht zurückgegeben wurde. Ein ausgeliehenes Exemplar wird in der Buchansicht als On loan angezeigt und hat keinen Ausleihbutton mehr. Unter /loans sieht jeder standardmässig seine eigenen aktiven Ausleihen und kann zur eigenen Historie wechseln. Andere Benutzer-IDs in der Adresse geben keine fremden Ausleihen frei. Die Seite ist auch über den Link My loans auf der Startseite erreichbar.
 
 Die Speicherung verwendet eine kurze Transaktion. SELECT ... FOR UPDATE sperrt dabei genau die Zeile des Exemplars bis zum Abschluss. Eine zweite gleichzeitige Anfrage muss warten und prüft danach die Verfügbarkeit erneut. Zusätzlich verhindert der vorhandene eindeutige Index zwei aktive Ausleihen desselben Exemplars. Bei einem Fehler wird die neue Änderung zurückgenommen. Bei einer bereits vergebenen oder gelöschten Kopie erscheint eine Fehlermeldung.
 
-Vorhandene Ausleihen und frühere Rückgaben werden durch eine neue Ausleihe nicht überschrieben. Eine Ansicht der abgeschlossenen Ausleihen folgt später.
+Vorhandene Ausleihen und frühere Rückgaben werden durch eine neue Ausleihe nicht überschrieben. Abgeschlossene eigene Ausleihen stehen unter My loans → Loan history.
+
+## Eigene Ausleihen und überfällige Exemplare
+
+Unter **My loans** gibt es drei Ansichten:
+
+- **Active loans**: alle eigenen aktiven Ausleihen, auch die überfälligen.
+- **Overdue loans**: nur eigene aktive Ausleihen, deren Rückgabefrist vorbei ist.
+- **Loan history**: eigene abgeschlossene Ausleihen mit Ausleihdatum, Frist und Rückgabedatum.
+
+Die Statuswerte heissen **On loan**, **Overdue** und **Returned**. Overdue wird zusätzlich fett angezeigt. Eine bereits zurückgegebene Ausleihe gilt nicht mehr als aktuell überfällig, auch wenn die damalige Frist überschritten war. Für eine leere Ansicht gibt es eine passende Meldung.
+
+In **Administration → Loans and returns** kann die Verwaltung zwischen allen aktiven Ausleihen und **Overdue copies** wechseln. Die überfällige Liste enthält Buch, Inventarnummer, Benutzer, E-Mail und Datumsangaben. Eine Rückgabe kann direkt dort erfasst werden. Nach der Rückgabe verschwindet das Exemplar aus der überfälligen Liste und erscheint in der eigenen Historie des Benutzers.
+
+PostgreSQL prüft bei jedem Aufruf: returned_at ist leer und due_at liegt vor CURRENT_TIMESTAMP. Der Status wird nicht zusätzlich gespeichert. Ein Hintergrunddienst ist dafür nicht nötig. Eine bereits offene Seite muss neu geladen werden, um eine gerade abgelaufene Frist zu sehen.
+
+Alle drei persönlichen Ansichten verwenden die Benutzer-ID aus der geprüften Sitzung. Ein Parameter in der Adresse kann keine fremden Ausleihen freigeben. Nur die Verwaltung darf die Übersicht aller überfälligen Exemplare öffnen. Die Ansichten werden über view in der Adresse gewählt. Unbekannte oder mehrfach angegebene Werte zeigen die aktive Liste.
 
 ## Rückgabe erfassen
 
@@ -138,7 +154,7 @@ Vorhandene Ausleihen und frühere Rückgaben werden durch eine neue Ausleihe nic
 
 Normale Benutzer können keine Rückgabe erfassen, auch nicht über eine direkte Anfrage an die Speicherfunktion. requireAdmin prüft das bei jedem Aufruf auf dem Server. Die Seite /admin/loans ist ebenfalls nur für die Verwaltung erreichbar.
 
-Die Rückgabe ist ein einzelner UPDATE-Befehl: Er setzt returned_at nur dann, wenn dieses Feld noch leer ist. Die Ausleihe bleibt mit ihrer ID, ihrem Benutzer, Exemplar, Ausleihdatum und ihrer Frist gespeichert. So ist die Grundlage für die spätere Historienansicht erhalten. Ein wiederholter oder gleichzeitiger Rückgabeversuch überschreibt das erste Rückgabedatum nicht. Eine alte Rückgabeanfrage kann auch keine spätere neue Ausleihe desselben Exemplars beenden, weil sie nur die ursprüngliche Ausleih-ID verwendet.
+Die Rückgabe ist ein einzelner UPDATE-Befehl: Er setzt returned_at nur dann, wenn dieses Feld noch leer ist. Die Ausleihe bleibt mit ihrer ID, ihrem Benutzer, Exemplar, Ausleihdatum und ihrer Frist gespeichert und ist danach in der eigenen Historie sichtbar. Ein wiederholter oder gleichzeitiger Rückgabeversuch überschreibt das erste Rückgabedatum nicht. Eine alte Rückgabeanfrage kann auch keine spätere neue Ausleihe desselben Exemplars beenden, weil sie nur die ursprüngliche Ausleih-ID verwendet.
 
 Für diesen Schritt sind keine neue Tabelle und kein neues Paket nötig. Ist die Ausleihe bereits abgeschlossen oder nicht mehr vorhanden, erscheint eine kurze Meldung. Nach einer Rückgabe werden die betroffenen Seiten neu eingelesen.
 
@@ -175,7 +191,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/app/books/[id]/page.tsx | Buchangaben und Exemplare mit Standort und Verfügbarkeit |
 | src/app/books/borrow-button.tsx | Ausleihbutton mit Wartezustand und Fehlermeldung |
 | src/app/books/borrow-actions.ts | Prüft Verfügbarkeit und speichert eine Ausleihe mit Frist |
-| src/app/loans/page.tsx | Zeigt die eigenen aktiven Ausleihen mit Ausleihdatum und Rückgabefrist |
+| src/app/loans/page.tsx | Eigene aktive und überfällige Ausleihen sowie Historie mit Rückgabedatum |
 | src/app/layout.tsx | Gemeinsamer HTML-Rahmen der Seite |
 | src/lib/db.ts | Verwaltet die Verbindung zur Datenbank |
 | src/lib/auth.ts | Einstellungen von Better Auth und Rollenfeld |
@@ -189,7 +205,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/lib/library-forms.ts | Gemeinsame Datentypen und einfache Prüfungen für IDs und ISBN |
 | src/app/admin/users/ | Benutzerübersicht sowie Formulare zum Anlegen und Bearbeiten |
 | src/app/admin/users/actions.ts | Prüft Rechte, erstellt Passwortkonten und speichert Benutzeränderungen |
-| src/app/admin/loans/page.tsx | Verwaltungsübersicht aller aktiven Ausleihen |
+| src/app/admin/loans/page.tsx | Verwaltungsübersicht mit Filter für überfällige Exemplare |
 | src/app/admin/loans/return-button.tsx | Rückgabebutton mit Wartezustand und Fehlermeldung |
 | src/app/admin/loans/actions.ts | Prüft Verwaltungsrechte und setzt das Rückgabedatum |
 | src/lib/user-forms.ts | Datentyp für die sichtbaren Benutzerangaben |

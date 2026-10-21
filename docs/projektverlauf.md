@@ -391,3 +391,38 @@ Nur eigens angelegte Testdaten wurden verändert und anschliessend entfernt. Die
 Für die Präsentation:
 
 "Nur die Verwaltung darf eine Rückgabe erfassen. Ich lösche die Ausleihe nicht, sondern setze ihr Rückgabedatum. Dadurch wird das Exemplar wieder verfügbar und die Ausleihe bleibt für die Historie erhalten. Die Prüfung auf dem Server verhindert Rückgaben durch normale Benutzer."
+
+## 21.10.2026: Eigene Ausleihen, Historie und überfällige Exemplare
+
+### Was wurde gemacht?
+
+- My loans zeigt weiterhin standardmässig die eigenen aktiven Ausleihen. Überfällige sind mit Overdue markiert.
+- Overdue loans zeigt nur die eigenen überfälligen Ausleihen.
+- Loan history zeigt eigene abgeschlossene Ausleihen mit Ausleihdatum, Frist und Rückgabedatum.
+- Die Verwaltungsseite Loans and returns hat den Filter Overdue copies für alle überfälligen Exemplare.
+- Die Verwaltung kann eine Rückgabe auch direkt aus der überfälligen Liste erfassen.
+- Die beiden vorhandenen Seiten src/app/loans/page.tsx und src/app/admin/loans/page.tsx wurden erweitert. Neue Tabellen oder Pakete sind nicht nötig.
+
+### Wann ist eine Ausleihe überfällig?
+
+Eine Ausleihe ist aktuell überfällig, wenn returned_at leer ist und due_at vor CURRENT_TIMESTAMP liegt. Die Datenbank prüft das bei jedem Seitenaufruf. Dafür wird kein zusätzlicher Status gespeichert. Eine offene Seite muss neu geladen werden, um eine gerade abgelaufene Frist anzuzeigen.
+
+Nach einer Rückgabe ist die Ausleihe abgeschlossen. Sie wird nicht weiter als aktuell überfällig angezeigt, auch wenn die damalige Frist überschritten war. In der Historie steht dann Returned mit dem gespeicherten Rückgabedatum. Aktive Ausleihen innerhalb der Frist heissen On loan.
+
+### Wie bleiben fremde Ausleihen geschützt?
+
+Alle persönlichen Abfragen verwenden weiterhin die Benutzer-ID aus der geprüften Sitzung. Der Ansichtsparameter wählt nur zwischen active, overdue und history. Er ändert nie den Benutzer. Unbekannte oder mehrfach angegebene Ansichten zeigen die aktive Liste. Die Übersicht aller überfälligen Exemplare prüft requireAdmin vor der Datenbankabfrage.
+
+### Was wurde geprüft?
+
+30 gezielte Prüfungen bestanden. Aktive Ausleihen innerhalb und ausserhalb der Frist, eigene Historie, alle drei Datumsangaben und die Statuswerte wurden geprüft. Eine verspätet zurückgegebene Ausleihe wurde korrekt als Returned statt Overdue angezeigt.
+
+Normale Benutzer konnten keine fremde Historie und keine Verwaltungsübersicht lesen. Auch ein geänderter Benutzer-ID-Parameter gab keine fremden Daten frei. Nicht angemeldete Besucher wurden in allen persönlichen Ansichten zur Loginseite geschickt. Ungültige und doppelte Ansichtsparameter wurden sicher behandelt.
+
+Die Verwaltung sah überfällige Exemplare verschiedener Benutzer, aber keine zurückgegebenen oder noch nicht fälligen Exemplare in diesem Filter. Nach einer echten Rückgabe im Browser verschwand das Exemplar aus beiden überfälligen Listen und erschien in der eigenen Historie. Eine in den Testdaten abgelaufene Frist wurde beim nächsten Aufruf ohne Hintergrunddienst erkannt. Die Links, Kennzeichnung der ausgewählten Ansicht und leere persönliche Überfälligkeitsliste funktionierten. Es gab keine JavaScript-Fehler im Browser.
+
+Die eigens angelegten Testdaten wurden danach entfernt. Vorhandene Buch-, Exemplar- und Ausleihdaten blieben laut Prüfsummen unverändert. Lint, TypeScript und Produktionsbuild bestanden. Die dauerhafte Testsuite folgt wie besprochen am Ende.
+
+Für die Präsentation:
+
+"Jeder Benutzer sieht nur seine eigenen Ausleihen und früheren Rückgaben. Die Datenbank erkennt eine überfällige Ausleihe daran, dass die Frist vorbei ist und noch kein Rückgabedatum existiert. Die Verwaltung hat dafür eine eigene Liste und kann dort die Rückgabe erfassen."
