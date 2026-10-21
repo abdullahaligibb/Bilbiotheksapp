@@ -31,11 +31,13 @@ export default async function Home() {
       <h1>Bibliotheksapp</h1>
       <p>Signed in as {user.name}.</p>
       <p>Role: {user.role}</p>
-      <p><Link href="/books">Search books</Link></p>
-      <p><Link href="/loans">My loans</Link></p>
-      {user.role === 'admin' && <p><Link href="/admin">Administration</Link></p>}
+      <ul className="menu-list">
+        <li><Link href="/books">Search books</Link><span>Find a book and check its available copies.</span></li>
+        <li><Link href="/loans">My loans</Link><span>See your loans, deadlines and returned copies.</span></li>
+        {user.role === 'admin' && <li><Link href="/admin">Administration</Link><span>Manage books, users and returns.</span></li>}
+      </ul>
       <LogoutButton />
-      {paragraphs}
+      <div className="connection-note">{paragraphs}</div>
     </main>
   );
 }

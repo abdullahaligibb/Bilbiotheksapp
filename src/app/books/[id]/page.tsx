@@ -61,27 +61,29 @@ export default async function BookDetailsPage({ params }: PageProps) {
       {copies.rows.length === 0 ? <p>No copies have been added for this book.</p> : (
         <>
           {availableCopies.length === 0 && <p>No copies are currently available.</p>}
-          <table>
-            <caption>Copies and locations</caption>
-            <thead>
-              <tr>
-                <th scope="col">Inventory number</th>
-                <th scope="col">Location</th>
-                <th scope="col">Status</th>
-                <th scope="col">Borrow</th>
-              </tr>
-            </thead>
-            <tbody>{copies.rows.map(function (copy) {
-              return (
-                <tr key={copy.id}>
-                  <td>{copy.inventory_number}</td>
-                  <td>{copy.location}</td>
-                  <td>{copy.available ? 'Available' : 'On loan'}</td>
-                  <td>{copy.available ? <BorrowButton copyId={copy.id} /> : '—'}</td>
+          <div className="table-scroll" role="region" aria-label="Book copies" tabIndex={0}>
+            <table>
+              <caption>Copies and locations</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Inventory number</th>
+                  <th scope="col">Location</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Borrow</th>
                 </tr>
-              );
-            })}</tbody>
-          </table>
+              </thead>
+              <tbody>{copies.rows.map(function (copy) {
+                return (
+                  <tr key={copy.id}>
+                    <td>{copy.inventory_number}</td>
+                    <td>{copy.location}</td>
+                    <td>{copy.available ? 'Available' : 'On loan'}</td>
+                    <td>{copy.available ? <BorrowButton copyId={copy.id} /> : '—'}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
         </>
       )}
     </main>

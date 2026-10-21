@@ -66,29 +66,31 @@ export default async function BookSearchPage({ searchParams }: PageProps) {
         <>
           {moreResults && <p>Showing the first 100 matches. Please narrow your search.</p>}
           {books.length === 0 ? <p>No books found.</p> : (
-            <table>
-              <caption>{search ? `Books matching: ${search}` : 'Books'}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Title</th>
-                  <th scope="col">Author</th>
-                  <th scope="col">ISBN</th>
-                  <th scope="col">Available copies</th>
-                  {user.role === 'admin' && <th scope="col">Edit</th>}
-                </tr>
-              </thead>
-              <tbody>{books.map(function (book) {
-                return (
-                  <tr key={book.id}>
-                    <td><Link href={`/books/${book.id}`}>{book.title}</Link></td>
-                    <td>{book.author}</td>
-                    <td>{book.isbn ?? '—'}</td>
-                    <td>{book.available_copies} of {book.total_copies}</td>
-                    {user.role === 'admin' && <td><Link href={`/admin/books/${book.id}`}>Edit {book.title}</Link></td>}
+            <div className="table-scroll" role="region" aria-label="Book results" tabIndex={0}>
+              <table>
+                <caption>{search ? `Books matching: ${search}` : 'Books'}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Title</th>
+                    <th scope="col">Author</th>
+                    <th scope="col">ISBN</th>
+                    <th scope="col">Available copies</th>
+                    {user.role === 'admin' && <th scope="col">Edit</th>}
                   </tr>
-                );
-              })}</tbody>
-            </table>
+                </thead>
+                <tbody>{books.map(function (book) {
+                  return (
+                    <tr key={book.id}>
+                      <td><Link href={`/books/${book.id}`}>{book.title}</Link></td>
+                      <td>{book.author}</td>
+                      <td>{book.isbn ?? '—'}</td>
+                      <td>{book.available_copies} of {book.total_copies}</td>
+                      {user.role === 'admin' && <td><Link href={`/admin/books/${book.id}`}>Edit {book.title}</Link></td>}
+                    </tr>
+                  );
+                })}</tbody>
+              </table>
+            </div>
           )}
         </>
       )}

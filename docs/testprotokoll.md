@@ -89,6 +89,16 @@ Für die Einrichtung waren keine Änderungen am Anwendungscode oder an der Start
 
 Die Installation meldete weiterhin fünf hohe npm-audit-Einträge sowie einen Hinweis zur nicht mehr unterstützten ESLint-Version 9.39.5. Es wurde kein automatischer Paketwechsel durchgeführt. Beim automatischen Browserlauf schrieb der Entwicklungsserver Meldungen zu einem geschlossenen Stream (CLOSED writable stream). Alle Testfälle bestanden und die Browser meldeten keine pageerror-Ereignisse. Beim anschliessenden Browser-Kurztest mit dem Produktionsbuild blieb die Server-Fehlerausgabe leer. Die Ursache der Stream-Meldungen wurde nicht abschliessend geklärt.
 
+## Layout auf Desktop und Handy prüfen
+
+Datum: 21.10.2026. Ergebnis: Bestanden.
+
+Nach der Gestaltung wurden neun Seitenansichten mit 1280 oder 375 Pixeln Breite geprüft: Anmeldung, Startseite, Büchersuche, Buchformular, Benutzerübersicht, Verwaltung und eigene Ausleihen. Screenshots der Ansichten wurden kontrolliert. Die Seiten hatten keinen horizontalen Überlauf. Breite Tabellen bleiben in einem eigenen Scrollbereich, und Eingabefelder passen auf den Bildschirm.
+
+Der Sprunglink zum Inhalt wurde mit Tab und Enter geprüft. Die Tabellenbereiche sind ebenfalls mit der Tastatur erreichbar. Links, Felder und Buttons haben sichtbare Fokusrahmen. Im Browser wurden keine JavaScript-Fehler gemeldet.
+
+Alle 13 vorhandenen Browser- und Integrationstestfälle bestanden erneut. Lint, TypeScript und Build bestanden. Es wurden keine zusätzlichen Design-Pakete installiert und keine Änderungen an der Datenbank oder Geschäftslogik vorgenommen. Die Prüfung umfasst die genannten Ansichten und ist keine vollständige Prüfung aller Anforderungen zur Barrierefreiheit.
+
 ## Fehler und Hinweise
 
 Weitere Prüfungen bestanden: npm run lint, npm run typecheck und npm run build. npm audit --omit=dev meldete keine bekannten Schwachstellen in den Produktionspaketen. Die bekannte Warnung in den Entwicklungswerkzeugen blieb bestehen; es wurde kein automatischer Versionswechsel erzwungen.

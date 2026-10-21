@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import './globals.css';
+
 export const metadata: Metadata = {
   title: 'Bibliotheksapp',
-  description: 'Next.js und PostgreSQL: Verbindungstest meiner Bibliotheksapp.',
+  description: 'Bücher suchen, Exemplare ausleihen und Ausleihen verwalten.',
 };
 type LayoutProperties = {
   readonly children: React.ReactNode;
@@ -10,7 +13,13 @@ type LayoutProperties = {
 export default function RootLayout(properties: LayoutProperties) {
   return (
     <html lang="de">
-      <body>{properties.children}</body>
+      <body>
+        <a className="skip-link" href="#main-content">Skip to content</a>
+        <header className="site-header">
+          <Link className="site-name" href="/">Bibliotheksapp</Link>
+        </header>
+        <div id="main-content" tabIndex={-1}>{properties.children}</div>
+      </body>
     </html>
   );
 }

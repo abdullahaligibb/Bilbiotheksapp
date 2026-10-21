@@ -14,8 +14,9 @@ export default async function LoginPage() {
   }
 
   return (
-    <main>
+    <main className="login-page">
       <h1>Sign in</h1>
+      <p>Sign in to search books and manage your loans.</p>
       <LoginForm />
     </main>
   );

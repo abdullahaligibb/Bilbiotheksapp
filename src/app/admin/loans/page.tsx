@@ -52,35 +52,37 @@ export default async function ManageLoansPage({ searchParams }: PageProps) {
       {returned === 'yes' && <p role="status">Return recorded.</p>}
       <p>Record a return after receiving the physical copy.</p>
       {result.rows.length === 0 ? <p>{overdueOnly ? 'No overdue copies.' : 'No active loans.'}</p> : (
-        <table>
-          <caption>{overdueOnly ? 'Overdue copies' : 'Active loans'}</caption>
-          <thead>
-            <tr>
-              <th scope="col">Title</th>
-              <th scope="col">Inventory number</th>
-              <th scope="col">Borrower</th>
-              <th scope="col">Email</th>
-              <th scope="col">Borrowed on</th>
-              <th scope="col">Due by</th>
-              <th scope="col">Status</th>
-              <th scope="col">Return</th>
-            </tr>
-          </thead>
-          <tbody>{result.rows.map(function (loan) {
-            return (
-              <tr key={loan.id}>
-                <td><Link href={`/books/${loan.book_id}`}>{loan.title}</Link></td>
-                <td>{loan.inventory_number}</td>
-                <td>{loan.name}</td>
-                <td>{loan.email}</td>
-                <td><time dateTime={loan.borrowed_at.toISOString()}>{formatDate(loan.borrowed_at)}</time></td>
-                <td><time dateTime={loan.due_at.toISOString()}>{formatDate(loan.due_at)}</time></td>
-                <td>{loan.overdue ? <strong>Overdue</strong> : 'On loan'}</td>
-                <td><ReturnButton loanId={loan.id} /></td>
+        <div className="table-scroll" role="region" aria-label="Loans and returns" tabIndex={0}>
+          <table>
+            <caption>{overdueOnly ? 'Overdue copies' : 'Active loans'}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Inventory number</th>
+                <th scope="col">Borrower</th>
+                <th scope="col">Email</th>
+                <th scope="col">Borrowed on</th>
+                <th scope="col">Due by</th>
+                <th scope="col">Status</th>
+                <th scope="col">Return</th>
               </tr>
-            );
-          })}</tbody>
-        </table>
+            </thead>
+            <tbody>{result.rows.map(function (loan) {
+              return (
+                <tr key={loan.id}>
+                  <td><Link href={`/books/${loan.book_id}`}>{loan.title}</Link></td>
+                  <td>{loan.inventory_number}</td>
+                  <td>{loan.name}</td>
+                  <td>{loan.email}</td>
+                  <td><time dateTime={loan.borrowed_at.toISOString()}>{formatDate(loan.borrowed_at)}</time></td>
+                  <td><time dateTime={loan.due_at.toISOString()}>{formatDate(loan.due_at)}</time></td>
+                  <td>{loan.overdue ? <strong>Overdue</strong> : 'On loan'}</td>
+                  <td><ReturnButton loanId={loan.id} /></td>
+                </tr>
+              );
+            })}</tbody>
+          </table>
+        </div>
       )}
     </main>
   );

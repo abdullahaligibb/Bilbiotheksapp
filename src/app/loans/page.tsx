@@ -64,37 +64,39 @@ export default async function MyLoansPage({ searchParams }: PageProps) {
       </nav>
       <p>The loan period is 30 days. An active loan is overdue when its deadline has passed.</p>
       {result.rows.length === 0 ? <p>{emptyMessage}</p> : (
-        <table>
-          <caption>{caption}</caption>
-          <thead>
-            <tr>
-              <th scope="col">Title</th>
-              <th scope="col">Inventory number</th>
-              <th scope="col">Borrowed on</th>
-              <th scope="col">Due by</th>
-              <th scope="col">Returned on</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>{result.rows.map(function (loan) {
-            let status = 'On loan';
-            if (loan.returned_at) {
-              status = 'Returned';
-            } else if (loan.overdue) {
-              status = 'Overdue';
-            }
-            return (
-              <tr key={loan.id}>
-                <td><Link href={`/books/${loan.book_id}`}>{loan.title}</Link></td>
-                <td>{loan.inventory_number}</td>
-                <td><time dateTime={loan.borrowed_at.toISOString()}>{formatDate(loan.borrowed_at)}</time></td>
-                <td><time dateTime={loan.due_at.toISOString()}>{formatDate(loan.due_at)}</time></td>
-                <td>{loan.returned_at ? <time dateTime={loan.returned_at.toISOString()}>{formatDate(loan.returned_at)}</time> : '—'}</td>
-                <td>{loan.overdue ? <strong>{status}</strong> : status}</td>
+        <div className="table-scroll" role="region" aria-label="My loans" tabIndex={0}>
+          <table>
+            <caption>{caption}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Inventory number</th>
+                <th scope="col">Borrowed on</th>
+                <th scope="col">Due by</th>
+                <th scope="col">Returned on</th>
+                <th scope="col">Status</th>
               </tr>
-            );
-          })}</tbody>
-        </table>
+            </thead>
+            <tbody>{result.rows.map(function (loan) {
+              let status = 'On loan';
+              if (loan.returned_at) {
+                status = 'Returned';
+              } else if (loan.overdue) {
+                status = 'Overdue';
+              }
+              return (
+                <tr key={loan.id}>
+                  <td><Link href={`/books/${loan.book_id}`}>{loan.title}</Link></td>
+                  <td>{loan.inventory_number}</td>
+                  <td><time dateTime={loan.borrowed_at.toISOString()}>{formatDate(loan.borrowed_at)}</time></td>
+                  <td><time dateTime={loan.due_at.toISOString()}>{formatDate(loan.due_at)}</time></td>
+                  <td>{loan.returned_at ? <time dateTime={loan.returned_at.toISOString()}>{formatDate(loan.returned_at)}</time> : '—'}</td>
+                  <td>{loan.overdue ? <strong>{status}</strong> : status}</td>
+                </tr>
+              );
+            })}</tbody>
+          </table>
+        </div>
       )}
     </main>
   );

@@ -241,6 +241,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/app/books/borrow-actions.ts | Prüft Verfügbarkeit und speichert eine Ausleihe mit Frist |
 | src/app/loans/page.tsx | Eigene aktive und überfällige Ausleihen sowie Historie mit Rückgabedatum |
 | src/app/layout.tsx | Gemeinsamer HTML-Rahmen der Seite |
+| src/app/globals.css | Gemeinsames Layout, Farben, Formulare und Tabellen für alle Seiten |
 | src/lib/db.ts | Verwaltet die Verbindung zur Datenbank |
 | src/lib/auth.ts | Einstellungen von Better Auth und Rollenfeld |
 | src/lib/require-user.ts | Prüft Anmeldung und Verwaltungsrolle auf dem Server |

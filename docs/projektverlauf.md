@@ -506,3 +506,9 @@ Die README nennt die Voraussetzungen und erklärt jetzt auch den normalen Start 
 Die Angabe zur Ausleihfrist wurde korrigiert: Die 30 Tage stammen aus dem Vorschlag auf Folie 6 von Project Kickoff. Sie wurden nicht frei gewählt. Die Beschreibung der Benutzertabelle stellt klar, dass Better Auth den verwendeten Passwort-Hash in auth_accounts speichert.
 
 Am Ende der README steht ein Hinweis zur fachlichen und sprachlichen Überarbeitung der Dokumentation mit KI. Bei diesem Schritt wurde nur die Dokumentation geändert. Die Abschlussdemo wird separat vorbereitet.
+
+## 21.10.2026: Einfaches Layout für die Anwendung
+
+Die Seiten haben jetzt einen gemeinsamen Kopfbereich, einen hellen Hintergrund und dunkelgrüne Links und Buttons. Die Startseite und Verwaltung zeigen die wichtigsten Links mit einer kurzen Erklärung. Formulare, Tabellen sowie Fehler- und Erfolgsmeldungen sind einheitlich gestaltet.
+
+Die Gestaltung steht in src/app/globals.css und wird im Hauptlayout eingebunden. Es wurden keine zusätzlichen Pakete installiert. Die vorhandenen Formulare, Datenbankabfragen und Rechteprüfungen bleiben bestehen. Auf schmalen Bildschirmen können breite Tabellen in einem eigenen Bereich gescrollt werden. Ein Sprunglink zum Inhalt, sichtbare Fokusrahmen und per Tastatur erreichbare Tabellenbereiche erleichtern die Bedienung.

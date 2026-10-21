@@ -12,9 +12,11 @@ export default async function AdminPage() {
       <h1>Administration</h1>
       <p>Signed in as {user.name}.</p>
       <p>Role: {user.role}</p>
-      <p><Link href="/admin/books">Manage books and copies</Link></p>
-      <p><Link href="/admin/users">Manage users</Link></p>
-      <p><Link href="/admin/loans">Loans and returns</Link></p>
+      <ul className="menu-list">
+        <li><Link href="/admin/books">Manage books and copies</Link><span>Add or edit books, inventory numbers and locations.</span></li>
+        <li><Link href="/admin/users">Manage users</Link><span>Create accounts and edit names, emails and roles.</span></li>
+        <li><Link href="/admin/loans">Loans and returns</Link><span>Check active and overdue loans and record returns.</span></li>
+      </ul>
       <p><Link href="/">Home</Link></p>
       <LogoutButton />
     </main>
