@@ -228,3 +228,40 @@ Die Testkonten wurden anschliessend entfernt. Name, E-Mail, Rolle und Passwort-H
 Für die Präsentation:
 
 "Die Anmeldung war schon vorhanden. Jetzt kann die Verwaltung auf der Webseite neue Benutzer anlegen und ihre Angaben bearbeiten. Better Auth erstellt den Passwort-Hash. Mein eigener Code prüft die Verwaltungsrechte und speichert Benutzer und Passwortkonto zusammen in einer Transaktion. Wenn sich die Rolle ändert, wird der Benutzer abgemeldet und muss sich neu anmelden."
+
+## 21.10.2026: Büchersuche nach Titel, Autor und ISBN
+
+### Was wurde gemacht?
+
+- Die Startseite hat den Link Search books zur Seite /books.
+- Ein einfaches Suchfeld durchsucht Titel, Autor und ISBN. Teilbegriffe reichen aus.
+- Die Suche ignoriert Gross- und Kleinschreibung. Für die ISBN werden Leerzeichen und Bindestriche aus dem Suchbegriff entfernt.
+- Ein leeres Suchfeld zeigt den Katalog. Clear search leert das Feld und setzt die Adresse zurück.
+- Die Ergebnisse zeigen Titel, Autor und ISBN. Nur die Verwaltung sieht einen Bearbeitungslink.
+- Höchstens 100 Treffer werden angezeigt. Bei mehr Treffern erscheint ein Hinweis, genauer zu suchen. Ohne Treffer erscheint eine kurze Meldung.
+- Die vorhandenen Tabellen und Pakete reichen aus. Die Startseite und src/app/books/page.tsx enthalten die Änderungen.
+
+### Wie funktioniert die Suche?
+
+1. Das HTML-Formular sendet eine GET-Anfrage, zum Beispiel /books?q=Harry.
+2. Die Seite prüft mit requireUser die Anmeldung und liest q aus der Adresse.
+3. Der Server entfernt Leerzeichen am Anfang und Ende und prüft die maximale Länge von 300 Zeichen.
+4. Die SQL-Abfrage sucht mit POSITION nach dem Text. LOWER macht den Vergleich unabhängig von Gross- und Kleinschreibung. Ein Ergebnis grösser als null bedeutet, dass der Text vorkommt.
+5. Die Eingaben werden mit SQL-Platzhaltern übergeben. Sie werden nicht als SQL-Befehle ausgeführt.
+6. Die Ergebnisse werden nach Titel und ID sortiert und als Tabelle angezeigt.
+
+### Was wurde getestet?
+
+31 Prüfungen bestanden. Dazu gehören Titel- und Autorenteile, Gross- und Kleinschreibung, Umlaute, vollständige und teilweise ISBNs, ISBNs mit Leerzeichen und Bindestrichen, Prozentzeichen, Unterstriche und Apostrophe. Auch kein Treffer, Leerzeichen am Rand, zu lange Suchbegriffe, doppelte q-Parameter und die Begrenzung auf 100 Treffer wurden geprüft.
+
+Das echte Suchformular wurde im Browser abgeschickt. Neuladen und Clear search funktionierten. Beide Rollen konnten suchen, nur die Verwaltung sah den funktionierenden Bearbeitungslink. Nicht angemeldete Besucher wurden zur Loginseite geleitet. Eingaben mit SQL- oder HTML-Text wurden als Text behandelt. Es gab keine JavaScript-Fehler im Browser.
+
+Die Prüfungen nutzten eigens angelegte Testbücher. Diese wurden danach entfernt. Die bestehenden Buchdaten blieben unverändert; das wurde mit einer Prüfsumme verglichen. Lint, TypeScript und Produktionsbuild bestanden.
+
+### Welche Art von Tests sind das?
+
+Das sind Browser- und Integrationstests gegen die laufende App und die Datenbank. Unit-Tests würden einzelne Funktionen getrennt prüfen. Solche Tests und eine dauerhaft im Repository gespeicherte Testsuite gibt es bisher nicht. Die lokalen Prüfskripte wurden im temporären Ordner gestartet.
+
+Für die Präsentation:
+
+"Mein Suchformular schickt den Suchbegriff in der Adresse an den Server. Dort prüfe ich die Anmeldung und suche mit SQL in Titel, Autor und ISBN. Die Datenbank liefert die passenden Bücher. Ich brauche dafür keine eigene Suchbibliothek."

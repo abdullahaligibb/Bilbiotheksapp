@@ -2,7 +2,7 @@
 
 Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten. Suche und Ausleihe folgen später.
+Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten. Alle angemeldeten Benutzer können nach Büchern suchen. Die Ausleihe folgt später.
 
 ## Verwendete Werkzeuge
 
@@ -76,6 +76,7 @@ npm run demo:users legt fehlende Demo-Konten an. Bestehende Konten, Passwörter 
 
 ## Benutzer verwalten
 
+
 1. Melde dich als Verwaltung an und öffne **Administration → Manage users**.
 2. Die Übersicht zeigt Name, E-Mail und Rolle der gespeicherten Benutzer.
 3. Mit **Add user** erstellst du ein Konto mit Name, E-Mail, Rolle und Anfangspasswort. Das Passwort muss 12 bis 128 Zeichen haben.
@@ -88,6 +89,19 @@ Namen dürfen 1 bis 100 Zeichen lang sein. E-Mail-Adressen werden auf ein einfac
 Werden E-Mail oder Rolle geändert, beendet der Server die aktuellen Sitzungen dieses Benutzers. Beim Ändern der eigenen E-Mail muss man sich mit der neuen Adresse erneut anmelden. Die eigene Verwaltungsrolle kann man nicht entfernen. So kann die letzte Verwaltungsperson sich nicht aussperren. Falls eine andere Verwaltungsperson die Rolle ändern soll, muss sie das mit ihrem eigenen Konto tun.
 
 Das Speichern läuft in einer Transaktion. Bei einem neuen Konto werden Benutzer und Passwortkonto gemeinsam erstellt. Eine kurze Tabellensperre verhindert, dass zwei Verwaltungsanfragen sich gleichzeitig gegenseitig die Rechte entziehen. Nach dieser Sperre werden die Rechte erneut aus der Datenbank gelesen. Benutzer-IDs und bestehende Ausleihen bleiben beim Bearbeiten erhalten. Eine Löschfunktion, Passwort-Zurücksetzen und eine automatische E-Mail mit Zugangsdaten sind noch nicht eingebaut.
+
+## Bücher suchen
+
+1. Melde dich an und öffne auf der Startseite **Search books**.
+2. Gib einen Titel, Autor oder eine ISBN ein und drücke **Search**. Ein Suchfeld prüft alle drei Angaben. Ein Teil des Textes reicht aus.
+3. Die Tabelle zeigt Titel, Autor und ISBN der passenden Bücher. Ohne ISBN steht dort ein Strich.
+4. Mit **Clear search** löschst du die Suche. Ein leeres Suchfeld zeigt den Katalog.
+
+Die Suche beachtet Gross- und Kleinschreibung nicht. Bei einer ISBN kannst du Leerzeichen und Bindestriche mit eingeben. Die Webseite zeigt höchstens 100 Treffer und bittet bei weiteren Treffern um einen genaueren Suchbegriff. Wenn nichts passt, erscheint **No books found**. Der Suchbegriff darf höchstens 300 Zeichen haben.
+
+Die Suche ist für beide Rollen erreichbar. Nur die Verwaltung sieht daneben einen Link zum Bearbeiten. Ohne Anmeldung führt /books zur Loginseite. Der Suchbegriff steht als q in der Adresse, zum Beispiel /books?q=Harry. Dadurch bleibt die Suche beim Neuladen erhalten.
+
+Das Formular verwendet eine normale GET-Anfrage. Die Seite liest den Suchbegriff und fragt PostgreSQL auf dem Server ab. SQL-Platzhalter halten den Suchtext vom SQL-Befehl getrennt. POSITION prüft, ob der Text im Titel, Autor oder in der ISBN vorkommt. Prozentzeichen und Unterstriche werden als normale Zeichen behandelt. Dafür sind keine zusätzliche Suchbibliothek und keine neuen Tabellen nötig.
 
 ## Bücher und Exemplare verwalten
 
@@ -118,6 +132,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | Datei oder Ordner | Aufgabe |
 | --- | --- |
 | src/app/page.tsx | Liest die Testnachricht und zeigt sie an |
+| src/app/books/page.tsx | Suchformular und SQL-Abfrage nach Titel, Autor und ISBN |
 | src/app/layout.tsx | Gemeinsamer HTML-Rahmen der Seite |
 | src/lib/db.ts | Verwaltet die Verbindung zur Datenbank |
 | src/lib/auth.ts | Einstellungen von Better Auth und Rollenfeld |
@@ -203,6 +218,8 @@ npm.cmd run build
 ```
 
 Für einen lokalen Start des fertigen Builds verwendest du npm.cmd run start. Stoppe vorher einen laufenden Entwicklungsserver auf demselben Port.
+
+Zusätzlich wurden die neuen Funktionen mit lokal gestarteten Browser- und Integrationstests geprüft. Sie testen die laufende App zusammen mit PostgreSQL. Das sind keine Unit-Tests für einzelne Funktionen. Die bisherigen Prüfskripte liegen lokal ausserhalb des Repositorys; eine dauerhafte Testsuite und einen npm-test-Befehl gibt es bisher nicht. Die geprüften Fälle stehen im Projektverlauf.
 
 ## Warum diese Pakete?
 
