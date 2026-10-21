@@ -32,6 +32,7 @@ export default async function Home() {
       <p>Signed in as {user.name}.</p>
       <p>Role: {user.role}</p>
       <p><Link href="/books">Search books</Link></p>
+      <p><Link href="/loans">My loans</Link></p>
       {user.role === 'admin' && <p><Link href="/admin">Administration</Link></p>}
       <LogoutButton />
       {paragraphs}

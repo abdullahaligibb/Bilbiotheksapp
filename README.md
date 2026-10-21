@@ -2,7 +2,7 @@
 
 Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten. Alle angemeldeten Benutzer können nach Büchern suchen. Die Ausleihe folgt später.
+Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten. Alle angemeldeten Benutzer können nach Büchern suchen, verfügbare Exemplare für sich ausleihen und ihre aktiven Ausleihen ansehen. Die Rückgabe folgt später.
 
 ## Verwendete Werkzeuge
 
@@ -112,7 +112,22 @@ Klicke in der Suche auf einen Buchtitel. Die Buchseite zeigt die Buchangaben und
 
 Eine frühere, abgeschlossene Ausleihe macht ein Exemplar nicht mehr unverfügbar. Auch mehrere frühere Ausleihen werden nicht mehrfach gezählt. Eine überfällige Ausleihe bleibt aktiv, bis eine Rückgabe erfasst wurde. Ein Buch ohne Exemplare zeigt **0 of 0** und eine passende Meldung.
 
-Beide Rollen dürfen diese Angaben nach dem Anmelden sehen. Namen und E-Mail-Adressen der ausleihenden Personen werden nicht angezeigt. Nur die Verwaltung sieht den Bearbeitungslink. Die Angaben werden bei jedem neuen Seitenaufruf aus der Datenbank gelesen. Sie sind eine Anzeige des aktuellen Zustands und reservieren kein Exemplar. Die Ausleih- und Rückgabefunktionen auf der Webseite folgen später.
+Beide Rollen dürfen diese Angaben nach dem Anmelden sehen. Namen und E-Mail-Adressen der ausleihenden Personen werden nicht angezeigt. Nur die Verwaltung sieht den Bearbeitungslink. Die Angaben werden bei jedem neuen Seitenaufruf aus der Datenbank gelesen. Sie sind eine Anzeige des aktuellen Zustands und reservieren kein Exemplar. Die eigentliche Prüfung und Speicherung erfolgt beim Klick auf den Ausleihbutton.
+
+## Ein Exemplar ausleihen
+
+1. Öffne über die Suche ein Buch.
+2. Klicke beim gewünschten verfügbaren Exemplar auf **Borrow for 30 days**.
+3. Der Server prüft die Anmeldung und die Verfügbarkeit erneut und speichert die Ausleihe.
+4. Danach öffnet sich **My loans** mit deinen aktiven Ausleihen, Inventarnummern, Ausleihdaten und Rückgabefristen.
+
+Beide Rollen können für sich selbst ausleihen. Der Benutzer wird aus der geprüften Sitzung gelesen. Ausleihdatum und Frist werden von PostgreSQL gesetzt. Das Formular kann weder einen anderen Benutzer noch eigene Datumswerte vorgeben. Die Frist beträgt vorerst 30 Tage und muss noch mit der Betreuung bestätigt werden.
+
+Jede Ausleihe ist eine neue Zeile in loans. returned_at bleibt leer, solange das Exemplar nicht zurückgegeben wurde. Ein ausgeliehenes Exemplar wird in der Buchansicht als On loan angezeigt und hat keinen Ausleihbutton mehr. Unter /loans sieht jeder nur seine eigenen aktiven Ausleihen, auch wenn er andere Benutzer-IDs in der Adresse eingibt. Die Seite ist auch über den Link My loans auf der Startseite erreichbar.
+
+Die Speicherung verwendet eine kurze Transaktion. SELECT ... FOR UPDATE sperrt dabei genau die Zeile des Exemplars bis zum Abschluss. Eine zweite gleichzeitige Anfrage muss warten und prüft danach die Verfügbarkeit erneut. Zusätzlich verhindert der vorhandene eindeutige Index zwei aktive Ausleihen desselben Exemplars. Bei einem Fehler wird die neue Änderung zurückgenommen. Bei einer bereits vergebenen oder gelöschten Kopie erscheint eine Fehlermeldung.
+
+Die Rückgabe durch die Verwaltung und eine Ansicht der abgeschlossenen Ausleihen folgen später. Vorhandene Ausleihen und frühere Rückgaben werden durch eine neue Ausleihe nicht überschrieben.
 
 ## Bücher und Exemplare verwalten
 
@@ -145,6 +160,9 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/app/page.tsx | Liest die Testnachricht und zeigt sie an |
 | src/app/books/page.tsx | Suchformular und SQL-Abfrage mit Anzahl verfügbarer Exemplare |
 | src/app/books/[id]/page.tsx | Buchangaben und Exemplare mit Standort und Verfügbarkeit |
+| src/app/books/borrow-button.tsx | Ausleihbutton mit Wartezustand und Fehlermeldung |
+| src/app/books/borrow-actions.ts | Prüft Verfügbarkeit und speichert eine Ausleihe mit Frist |
+| src/app/loans/page.tsx | Zeigt die eigenen aktiven Ausleihen mit Ausleihdatum und Rückgabefrist |
 | src/app/layout.tsx | Gemeinsamer HTML-Rahmen der Seite |
 | src/lib/db.ts | Verwaltet die Verbindung zur Datenbank |
 | src/lib/auth.ts | Einstellungen von Better Auth und Rollenfeld |

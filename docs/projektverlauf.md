@@ -296,3 +296,53 @@ Die Prüfungen verwendeten nur eigens angelegte Bücher, Exemplare und Ausleihen
 Für die Präsentation:
 
 "Ein Buch kann mehrere Exemplare haben. Ich prüfe für jedes Exemplar, ob es eine Ausleihe ohne Rückgabedatum gibt. Wenn nicht, ist es verfügbar. Deshalb muss ich keinen zweiten Verfügbarkeitswert speichern, der veralten könnte."
+
+## 21.10.2026: Ausleihe mit Ausleihdatum und Rückgabefrist
+
+### Was wurde gemacht?
+
+- Verfügbare Exemplare haben auf der Buchseite den Button Borrow for 30 days.
+- Der angemeldete Benutzer kann ein Exemplar für sich selbst ausleihen. Das gilt für beide Rollen.
+- PostgreSQL speichert den Benutzer, das Exemplar, das aktuelle Ausleihdatum und eine Rückgabefrist von vorerst 30 Tagen.
+- Nach dem Speichern öffnet sich My loans. Dort sieht jeder nur seine eigenen aktiven Ausleihen mit Inventarnummer und beiden Datumsangaben.
+- Die Benutzer-ID und Datumswerte können nicht über das Formular vorgegeben werden.
+- Die Tabellen waren schon vorbereitet. Es gibt kein neues Paket und keine neue Migration.
+- Die Frist von 30 Tagen muss noch mit der Betreuung bestätigt werden. Die Rückgabe auf der Webseite folgt später.
+
+### Was passiert beim Ausleihen?
+
+1. Die Server Action borrowCopy prüft mit requireUser die Anmeldung und danach die Exemplar-ID.
+2. BEGIN startet eine Transaktion auf einer Datenbankverbindung.
+3. SELECT ... FOR UPDATE liest und sperrt das Exemplar für diese kurze Transaktion.
+4. Der Server prüft, ob es eine Ausleihe ohne Rückgabedatum gibt. Falls ja, erscheint eine Meldung.
+5. Falls das Exemplar verfügbar ist, erstellt INSERT eine neue Ausleihe. PostgreSQL setzt borrowed_at und due_at.
+6. COMMIT speichert die Änderung und gibt die Sperre frei. Bei einem Fehler macht ROLLBACK die neue Änderung rückgängig.
+7. Die Anwendung aktualisiert die betroffenen Seiten und öffnet My loans.
+
+### Welcher Teil ist etwas anspruchsvoller?
+
+Die kurze Transaktion und FOR UPDATE sind nötig, weil zwei Personen fast gleichzeitig auf Ausleihen klicken können. Die erste Anfrage sperrt das Exemplar. Die zweite wartet. Nach dem Speichern prüft die zweite Anfrage nochmals und erkennt die aktive Ausleihe. Zusätzlich verhindert die eindeutige Datenbankregel zwei aktive Ausleihen pro Exemplar. Der Button allein würde dafür nicht reichen.
+
+Die Transaktion verwendet vom Beginn bis zum Abschluss dieselbe Datenbankverbindung. Mehrere getrennte pool.query-Aufrufe würden diese gemeinsame Transaktion nicht sicherstellen.
+
+### Welche Dateien gehören dazu?
+
+- src/app/books/borrow-actions.ts: Rechte prüfen, Exemplar sperren und Ausleihe speichern.
+- src/app/books/borrow-button.tsx: Button, Wartezustand und Fehlermeldung.
+- src/app/books/[id]/page.tsx: Zeigt den Button nur bei verfügbaren Exemplaren.
+- src/app/loans/page.tsx: Liest nur die aktiven Ausleihen des angemeldeten Benutzers.
+- src/app/page.tsx: Link zu My loans.
+
+### Was wurde geprüft?
+
+30 Prüfungen bestanden. Dazu gehören das Ausleihen über den echten Browserbutton, der gespeicherte Benutzer, das aktuelle Ausleihdatum, genau 30 Tage Frist und die Anzeige beider Daten. Eingeschleuste Benutzer-IDs und Datumsangaben wurden ignoriert. Eine nicht angemeldete Person konnte die Speicherfunktion auch mit einer direkten Anfrage nicht ausführen.
+
+Eine bereits geöffnete Seite mit veraltetem Verfügbarkeitsstand und ein wiederholter direkter Aufruf erzeugten keine zweite Ausleihe. Zwei gleichzeitige Anfragen verschiedener Benutzer wurden mit einer kurz gehaltenen Testsperre gestartet: Genau eine war erfolgreich, die andere bekam die Meldung, dass das Exemplar schon ausgeliehen ist. In der Datenbank gab es danach genau eine aktive Ausleihe.
+
+Beide Rollen konnten für sich selbst ausleihen. Fremde Ausleihen wurden auf My loans nicht angezeigt, auch nicht durch einen Benutzer-ID-Parameter in der Adresse. Eine abgeschlossene Testausleihe blieb erhalten und erschien nicht in der aktiven Liste. Ein danach gelöschtes Testexemplar führte beim erneuten Aufruf zu einer verständlichen Meldung. Es gab keine JavaScript-Fehler im Browser.
+
+Alle erzeugten Testdaten wurden entfernt. Die bestehenden Buch-, Exemplar- und Ausleihdaten blieben laut Prüfsummen unverändert. Lint, TypeScript und Produktionsbuild bestanden. Die dauerhafte Testsuite folgt wie besprochen am Ende.
+
+Für die Präsentation:
+
+"Beim Ausleihen prüft mein Server die Anmeldung und sperrt das Exemplar kurz in einer Transaktion. Dann prüft er nochmals die Verfügbarkeit und speichert eine neue Ausleihe mit Datum und Frist. So können zwei Personen nicht dasselbe Exemplar gleichzeitig bekommen."

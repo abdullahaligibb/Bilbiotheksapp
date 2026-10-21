@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getPool } from '@/lib/db';
 import { requireUser } from '@/lib/require-user';
 import { validId, type Book } from '@/lib/library-forms';
+import BorrowButton from '../borrow-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +47,7 @@ export default async function BookDetailsPage({ params }: PageProps) {
     <main>
       <h1>{book.title}</h1>
       <p><Link href="/books">Back to book search</Link></p>
+      <p><Link href="/loans">My loans</Link></p>
       <p>Author: {book.author}</p>
       <p>ISBN: {book.isbn ?? '—'}</p>
       {book.publisher && <p>Publisher: {book.publisher}</p>}
@@ -55,6 +57,7 @@ export default async function BookDetailsPage({ params }: PageProps) {
       {user.role === 'admin' && <p><Link href={`/admin/books/${book.id}`}>Edit book</Link></p>}
       <h2>Copies</h2>
       <p>Available copies: {availableCopies.length} of {copies.rows.length}</p>
+      <p>You can borrow an available copy for yourself for 30 days.</p>
       {copies.rows.length === 0 ? <p>No copies have been added for this book.</p> : (
         <>
           {availableCopies.length === 0 && <p>No copies are currently available.</p>}
@@ -65,6 +68,7 @@ export default async function BookDetailsPage({ params }: PageProps) {
                 <th scope="col">Inventory number</th>
                 <th scope="col">Location</th>
                 <th scope="col">Status</th>
+                <th scope="col">Borrow</th>
               </tr>
             </thead>
             <tbody>{copies.rows.map(function (copy) {
@@ -73,6 +77,7 @@ export default async function BookDetailsPage({ params }: PageProps) {
                   <td>{copy.inventory_number}</td>
                   <td>{copy.location}</td>
                   <td>{copy.available ? 'Available' : 'On loan'}</td>
+                  <td>{copy.available ? <BorrowButton copyId={copy.id} /> : '—'}</td>
                 </tr>
               );
             })}</tbody>
