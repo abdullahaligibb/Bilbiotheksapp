@@ -72,7 +72,7 @@ Nach der Rückkehr zu englischen Namen wurden die vorhandenen Datensätze mit Pr
 - Das sichere Erstellen von Passwort-Hashes. password_hash ist bisher nur die vorbereitete Spalte.
 - Formulare für die zusätzlichen Buchfelder und deren Prüfung. Die neuen Felder sind vorerst optional, damit ältere Formulare funktionieren.
 - Ausleihe und Rückgabe über die neuen Tabellen. books.borrowed bleibt vorerst für den alten Übungscode erhalten. Später kommt die Verfügbarkeit aus loans.
-- Bestätigung der vorgeschlagenen Ausleihfrist von 30 Tagen.
+- Die Ausleihfrist von 30 Tagen war zunächst als offen notiert. Sie entspricht dem Vorschlag auf Folie 6 von Project Kickoff.
 - Vollständige Tests über die Webseite, darunter zwei gleichzeitige Ausleihanfragen.
 
 Für die Präsentation:
@@ -303,11 +303,11 @@ Für die Präsentation:
 
 - Verfügbare Exemplare haben auf der Buchseite den Button Borrow for 30 days.
 - Der angemeldete Benutzer kann ein Exemplar für sich selbst ausleihen. Das gilt für beide Rollen.
-- PostgreSQL speichert den Benutzer, das Exemplar, das aktuelle Ausleihdatum und eine Rückgabefrist von vorerst 30 Tagen.
+- PostgreSQL speichert den Benutzer, das Exemplar, das aktuelle Ausleihdatum und eine Rückgabefrist von 30 Tagen.
 - Nach dem Speichern öffnet sich My loans. Dort sieht jeder nur seine eigenen aktiven Ausleihen mit Inventarnummer und beiden Datumsangaben.
 - Die Benutzer-ID und Datumswerte können nicht über das Formular vorgegeben werden.
 - Die Tabellen waren schon vorbereitet. Es gibt kein neues Paket und keine neue Migration.
-- Die Frist von 30 Tagen muss noch mit der Betreuung bestätigt werden. Die Rückgabe auf der Webseite folgt später.
+- Die Frist von 30 Tagen entspricht dem Vorschlag auf Folie 6 von Project Kickoff. Die Rückgabe auf der Webseite folgt später.
 
 ### Was passiert beim Ausleihen?
 
@@ -498,3 +498,11 @@ Die Prüfung fand auf demselben Rechner mit bereits vorhandenen Werkzeugen statt
 Für die Präsentation:
 
 "Ich habe geprüft, ob die Daten nach einem Neustart der App und der Datenbank noch vorhanden sind. Ausserdem habe ich das Projekt in einer sauberen Kopie mit einer leeren Datenbank nach meiner README eingerichtet. Beide Tests haben funktioniert."
+
+## 21.10.2026: README für die Übergabe ergänzen
+
+Die README nennt die Voraussetzungen und erklärt jetzt auch den normalen Start einer bereits eingerichteten Kopie. Die Startanleitung für eine frische Einrichtung, die Demo-Konten, Beispieldaten, Funktionen und Testbefehle bleiben enthalten. Die geprüften Ergebnisse und bekannten Einschränkungen sind verlinkt.
+
+Die Angabe zur Ausleihfrist wurde korrigiert: Die 30 Tage stammen aus dem Vorschlag auf Folie 6 von Project Kickoff. Sie wurden nicht frei gewählt. Die Beschreibung der Benutzertabelle stellt klar, dass Better Auth den verwendeten Passwort-Hash in auth_accounts speichert.
+
+Am Ende der README steht ein Hinweis zur fachlichen und sprachlichen Überarbeitung der Dokumentation mit KI. Bei diesem Schritt wurde nur die Dokumentation geändert. Die Abschlussdemo wird separat vorbereitet.

@@ -1,6 +1,6 @@
 # Bibliotheksapp
 
-Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
+Diese Bibliotheksapp ist eine Webanwendung mit Next.js und PostgreSQL.
 
 Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten sowie Rückgaben erfassen. Alle angemeldeten Benutzer können nach Büchern suchen, verfügbare Exemplare für sich ausleihen und ihre eigenen Ausleihen ansehen. Überfällige Ausleihen werden markiert. Die Verwaltung kann alle überfälligen Exemplare auflisten.
 
@@ -24,6 +24,8 @@ Stand der erfassten Versionen: 19.10.2026.
 Ich verwende Node.js 24.x. .nvmrc hält die verwendete Version fest. package-lock.json enthält die genauen Paketversionen. Das Docker-Image bleibt bei PostgreSQL 18, kann aber neuere Fehlerkorrekturen dieser Version erhalten.
 
 ## Projekt auf einem neuen Rechner einrichten
+
+Voraussetzungen: Node.js 24.x mit npm und Docker Desktop mit Docker Compose. Git wird zum Klonen des Repositorys benötigt. Für die automatischen Browsertests wird zusätzlich Google Chrome verwendet.
 
 Docker Desktop muss laufen. Öffne den Projektordner in VS Code und dort ein PowerShell-Terminal. Die Ports 3000 und 5432 müssen frei sein.
 
@@ -61,7 +63,18 @@ npm.cmd run demo:books
 npm.cmd run dev
 ```
 
-Öffne http://localhost:3000/login. Die bereits eingerichtete Arbeitskopie enthält die neuen lokalen Einstellungen und Demo-Benutzer schon. Die vorhandenen Datenbank-Zugangsdaten wurden nicht geändert.
+Öffne http://localhost:3000/login. Die beiden Demo-Konten stehen im Abschnitt Anmelden und abmelden. Bei einer bereits eingerichteten Kopie bleiben die vorhandenen Konfigurationsdateien und Zugangsdaten erhalten.
+
+## Bereits eingerichtetes Projekt starten
+
+Wenn die Pakete, Konfigurationsdateien und Datenbank bereits eingerichtet sind, reichen im Projektordner diese Befehle:
+
+```powershell
+docker compose up -d --wait
+npm.cmd run dev
+```
+
+Öffne danach http://localhost:3000/login. Tabellen und Demo-Daten müssen nicht bei jedem Start neu angelegt werden. Nach Änderungen an package-lock.json werden die Pakete erneut mit npm.cmd ci installiert. Falls bereits ein Entwicklungsserver läuft, verwende ihn oder stoppe ihn vor einem erneuten Start.
 
 ## Anmelden und abmelden
 
@@ -137,7 +150,7 @@ Beide Rollen dürfen diese Angaben nach dem Anmelden sehen. Namen und E-Mail-Adr
 3. Der Server prüft die Anmeldung und die Verfügbarkeit erneut und speichert die Ausleihe.
 4. Danach öffnet sich **My loans** mit deinen aktiven Ausleihen, Inventarnummern, Ausleihdaten und Rückgabefristen.
 
-Beide Rollen können für sich selbst ausleihen. Der Benutzer wird aus der geprüften Sitzung gelesen. Ausleihdatum und Frist werden von PostgreSQL gesetzt. Das Formular kann weder einen anderen Benutzer noch eigene Datumswerte vorgeben. Die Frist beträgt vorerst 30 Tage und muss noch mit der Betreuung bestätigt werden.
+Beide Rollen können für sich selbst ausleihen. Der Benutzer wird aus der geprüften Sitzung gelesen. Ausleihdatum und Frist werden von PostgreSQL gesetzt. Das Formular kann weder einen anderen Benutzer noch eigene Datumswerte vorgeben. Die Frist beträgt 30 Tage und entspricht dem Vorschlag auf Folie 6 von Project Kickoff.
 
 Jede Ausleihe ist eine neue Zeile in loans. returned_at bleibt leer, solange das Exemplar nicht zurückgegeben wurde. Ein ausgeliehenes Exemplar wird in der Buchansicht als On loan angezeigt und hat keinen Ausleihbutton mehr. Unter /loans sieht jeder standardmässig seine eigenen aktiven Ausleihen und kann zur eigenen Historie wechseln. Andere Benutzer-IDs in der Adresse geben keine fremden Ausleihen frei. Die Seite ist auch über den Link My loans auf der Startseite erreichbar.
 
@@ -262,7 +275,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | --- | --- |
 | books | Angaben zum Buch, zum Beispiel Titel, Autor und ISBN |
 | copies | Die einzelnen Exemplare mit Inventarnummer und Standort |
-| users | Benutzer mit E-Mail, Passwort-Hash und Rolle |
+| users | Benutzer mit Name, E-Mail und Rolle; der Login-Passwort-Hash liegt in auth_accounts |
 | loans | Ausleihen mit Benutzer, Exemplar und Datumsangaben |
 | setup_check | Die Testnachricht für den Verbindungstest |
 | auth_accounts | Login-Methode und Passwort-Hash eines Benutzers |
@@ -378,10 +391,14 @@ Quellcode, SQL-Dateien, README, compose.yaml, package-lock.json und die Beispiel
 
 Die lokale Datenbank verwendet für die Entwicklung einen PostgreSQL-Superuser. Für einen späteren Einsatz ausserhalb der lokalen Übung müssen die Datenbankrechte passend eingerichtet werden.
 
-Die bisherigen Schritte und die offenen Aufgaben stehen in [docs/projektverlauf.md](docs/projektverlauf.md).
+Die Umsetzung und die Entscheidungen stehen im [Projektverlauf](docs/projektverlauf.md). Das [Testprotokoll](docs/testprotokoll.md) enthält die Ergebnisse und bekannten Einschränkungen. Am 21.10.2026 bestanden 11 Unit-Tests, 13 App-Testfälle, Lint, TypeScript und Build. Auch der Neustart mit erhaltenen Daten und die frische Einrichtung in einer getrennten Kopie auf demselben Rechner wurden geprüft.
 
 ## Offizielle Dokumentation
 
 - [Next.js](https://nextjs.org/docs/app/getting-started/installation)
 - [node-postgres](https://node-postgres.com/features/queries)
 - [PostgreSQL-Image](https://hub.docker.com/_/postgres)
+
+## Hinweis zur Dokumentation
+
+Bei der Dokumentation wurde KI eingesetzt, um fachliche Beschreibungen zu prüfen und Formulierungen, Grammatik und Rechtschreibung zu verbessern.

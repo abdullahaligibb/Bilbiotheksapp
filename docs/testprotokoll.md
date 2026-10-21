@@ -102,7 +102,7 @@ Node.js kann beim Importieren der TypeScript-Hilfsfunktionen einen Hinweis zur E
 Zusätzliche Prüfung der Übergabedaten am 21.10.2026: Drei fiktive Bücher mit jeweils zwei Exemplaren wurden angelegt. Ein zweiter Aufruf des Skripts erzeugte keine Duplikate und veränderte keine bestehenden Zeilen. Die vollständigen Buchangaben, gültigen ISBN-Prüfziffern und eindeutigen Inventarnummern wurden geprüft. Alle Bücher und ihre verfügbaren Exemplare waren im Browser sichtbar. Lint und TypeScript bestanden auch nach dieser Ergänzung.
 
 - Die Tests decken die wichtigsten Abläufe und ausgewählte Fehlerfälle ab. Sie beweisen nicht, dass jeder mögliche Fehler ausgeschlossen ist.
-- Die vorgeschlagene Ausleihfrist von 30 Tagen muss noch bestätigt werden.
+- Die Ausleihfrist beträgt 30 Tage und entspricht dem Vorschlag auf Folie 6 von Project Kickoff.
 - Die frische Einrichtung wurde auf demselben Windows-Rechner mit bereits installiertem Node.js, Docker Desktop und Chrome geprüft. Die Installation dieser Werkzeuge auf einem anderen Rechner ist damit nicht getestet.
 - Der Neustarttest prüfte Next.js und den PostgreSQL-Container, einschliesslich Neuerstellung des Containers mit bestehendem Volume. Windows und Docker Desktop selbst wurden nicht neu gestartet.
 - Die 13 App-Testfälle liefen gegen den Entwicklungsserver. Gegen den Produktionsbuild wurden Anmeldung, Datenbanknachricht, Katalog und Rollenschutz als Browser-Kurztest geprüft; nicht die gesamte Testsuite.
