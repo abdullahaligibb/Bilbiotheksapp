@@ -456,3 +456,15 @@ Die bestehenden Benutzer, Passwortkonten und Bücher blieben laut Prüfsummen un
 Für die Präsentation:
 
 "Ich prüfe Eingaben und Rechte auf dem Server, weil Browserprüfungen und versteckte Buttons umgangen werden können. Die Benutzer-ID kommt aus der Anmeldung. Verwaltungsaktionen prüfen zusätzlich die Rolle. Die Datenbank verhindert ausserdem doppelte Werte und zwei aktive Ausleihen desselben Exemplars."
+
+## 21.10.2026: Funktionen testen und Fehler beheben
+
+Die dauerhaften Tests liegen jetzt im Repository. npm test startet 11 Unit-Tests für IDs, Textfelder, ISBNs und E-Mail-Adressen. npm run test:app startet 13 Browser- und Integrationstestfälle gegen die laufende App und PostgreSQL.
+
+Der Testläufer gehört zu Node.js. Playwright 1.62.1 wurde nur als Entwicklungsabhängigkeit für die Browsersteuerung ergänzt. Die Anwendung selbst braucht kein neues Paket im normalen Betrieb. Alle Testkonten und Testdaten bekommen einen eindeutigen Namen und werden danach entfernt. Vorhandene Datensätze werden mit Prüfsummen verglichen.
+
+Die Tests decken Anmeldung, Rechte, Bücher, Exemplare, Suche, Benutzerverwaltung, Ausleihe, Rückgabe, Historie und überfällige Ausleihen ab. Auch Rollenwechsel, gesperrte direkte Anfragen, doppelte Werte und zwei gleichzeitige Ausleihanfragen werden geprüft. Dafür sind Teile des Testcodes etwas anspruchsvoller als die Formulare der Anwendung.
+
+Alle 11 Unit-Tests und 13 App-Testfälle bestanden. Lint, TypeScript und Produktionsbuild bestanden ebenfalls. In diesen Abläufen wurde kein weiterer Funktionsfehler gefunden. Im Testcode wurde sichergestellt, dass ein Speichervorgang vor einem Neuladen abgeschlossen ist. Die bisherigen einzelnen Prüfbedingungen aus den temporären Skripten sind nicht mit der Anzahl dieser Testfälle gleichzusetzen.
+
+Die Testanleitung steht in der README. docs/testprotokoll.md enthält die Ergebnisse, Hinweise und offenen Punkte für die Präsentation. Frühere Einträge beschreiben jeweils den damaligen Stand vor dieser dauerhaften Testsuite.

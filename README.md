@@ -18,6 +18,7 @@ Stand der erfassten Versionen: 19.10.2026.
 | Next.js / React | 16.4.2 / 19.3.0 |
 | pg | 8.23.1 |
 | Better Auth | 1.7.12 |
+| Playwright, nur für Browsertests | 1.62.1 |
 | TypeScript / ESLint | 5.9.3 / 9.39.5 |
 
 Ich verwende Node.js 24.x. .nvmrc hält die verwendete Version fest. package-lock.json enthält die genauen Paketversionen. Das Docker-Image bleibt bei PostgreSQL 18, kann aber neuere Fehlerkorrekturen dieser Version erhalten.
@@ -234,6 +235,9 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | database/migrations/002_authentication.sql | Ergänzt die Tabellen für die Anmeldung |
 | compose.yaml | Einstellungen für PostgreSQL in Docker |
 | docs/projektverlauf.md | Entscheidungen und Notizen für die Präsentation |
+| tests/validation.test.mjs | Unit-Tests für IDs, Texte, ISBNs und E-Mail-Adressen |
+| tests/app.test.mjs | Browser- und Datenbanktests der wichtigsten Abläufe |
+| docs/testprotokoll.md | Testergebnisse und Grenzen der Prüfung |
 
 ## Datenmodell
 
@@ -299,7 +303,29 @@ npm.cmd run build
 
 Für einen lokalen Start des fertigen Builds verwendest du npm.cmd run start. Stoppe vorher einen laufenden Entwicklungsserver auf demselben Port.
 
-Zusätzlich wurden die neuen Funktionen mit lokal gestarteten Browser- und Integrationstests geprüft. Sie testen die laufende App zusammen mit PostgreSQL. Das sind keine Unit-Tests für einzelne Funktionen. Die bisherigen Prüfskripte liegen lokal ausserhalb des Repositorys; eine dauerhafte Testsuite und einen npm-test-Befehl gibt es bisher nicht. Die geprüften Fälle stehen im Projektverlauf.
+## Automatische Tests
+
+Die Tests liegen jetzt im Repository und können wiederholt gestartet werden. Der eingebaute Testläufer von Node.js führt sie aus. Die älteren Prüfungen im Projektverlauf wurden noch mit lokalen Skripten durchgeführt.
+
+Unit-Tests prüfen einzelne Hilfsfunktionen. Dafür müssen weder Docker noch die Webseite laufen:
+
+```powershell
+npm.cmd test
+```
+
+Die Browser- und Integrationstests prüfen die laufende App mit PostgreSQL. Dafür müssen Docker, die eingerichtete Datenbank, die Webseite und Google Chrome bereit sein. Der Browser läuft unsichtbar. In einem zweiten Terminal:
+
+```powershell
+npm.cmd run test:app
+```
+
+BETTER_AUTH_URL und DATABASE_URL kommen aus .env.local. Die Tests akzeptieren nur lokale Adressen. Sie erstellen eigene zufällige Testkonten, Bücher, Exemplare und Ausleihen und entfernen diese anschliessend wieder. Vorhandene Daten werden mit Prüfsummen verglichen. Es werden keine Tabellen zurückgesetzt, Docker-Volumes gelöscht oder vorhandene Passwörter geändert. Während des Tests sollte niemand dieselben Daten auf der Webseite bearbeiten, sonst kann der Vergleich fehlschlagen.
+
+Der Testablauf erzeugt die Daten schrittweise: Buch anlegen, Exemplare hinzufügen, ausleihen und zurückgeben. Die App-Testfälle sind deshalb absichtlich in dieser Reihenfolge ausgeführt. Für einen erneuten Test wieder den ganzen Befehl starten. Bei einem hart abgebrochenen Test können Datensätze mit dem eindeutigen test-Präfix zurückbleiben; ein normal abgeschlossener Test räumt sie auch nach einem fehlgeschlagenen Prüfschritt auf.
+
+Playwright ist nur eine Entwicklungsabhängigkeit für die Browsersteuerung. Es wird keine zusätzliche Testarchitektur in die App eingebaut. Statt Chrome kann ein anderer installierter unterstützter Browser mit TEST_BROWSER_CHANNEL gewählt werden, zum Beispiel msedge. Beim Unit-Test kann Node.js einen Hinweis zur Erkennung von ES-Modulen ausgeben. Dieser Hinweis ist kein fehlgeschlagener Test; die Prüfungen bleiben eingeschaltet.
+
+Die konkreten Ergebnisse stehen in [docs/testprotokoll.md](docs/testprotokoll.md).
 
 ## Warum diese Pakete?
 
@@ -309,6 +335,7 @@ Zusätzlich wurden die neuen Funktionen mit lokal gestarteten Browser- und Integ
 - @next/env lädt die Umgebungsdateien für das Setup-Skript.
 - better-auth übernimmt Passwort-Hashes, Login, Logout und Sitzungen. Die Bibliothek läuft in der App und verwendet die PostgreSQL-Datenbank.
 - ESLint prüft typische Fehler im Code.
+- playwright steuert für die App-Tests einen Browser. Das Paket wird im normalen Betrieb nicht benötigt.
 
 ## Häufige Probleme
 
