@@ -482,3 +482,19 @@ Das Skript wurde zweimal ausgeführt. Danach waren weiterhin genau drei Beispiel
 Für die Präsentation:
 
 "Für die Übergabe gibt es drei fiktive Bücher mit jeweils zwei Exemplaren. Das Skript kann die Beispieldaten erneut anlegen, ohne bestehende Angaben oder Ausleihen zu überschreiben."
+
+## 21.10.2026: Neustart und frische Einrichtung prüfen
+
+Der Neustarttest für die Abnahme wurde durchgeführt. Dafür wurden eigene Testdaten ergänzt: ein Benutzer, ein Buch, zwei Exemplare sowie eine aktive und eine abgeschlossene Ausleihe. Die aktive Ausleihe wurde im Browser erstellt. Danach wurden Next.js und der PostgreSQL-Container gestoppt und wieder gestartet. Docker verwendete das bestehende Volume weiter.
+
+Die Anzahl und Prüfsummen der gespeicherten Buch-, Exemplar-, Benutzer-, Ausleih- und Passwortkontodaten blieben unverändert. Auch die Verbindungsnachricht und Auth-Verifikationen blieben erhalten. Im Browser waren die aktive Ausleihe, Rückgabehistorie und richtige Verfügbarkeit sichtbar. Die bestehende Testsitzung und eine erneute Anmeldung funktionierten. Sitzungen wurden separat geprüft, weil eine neue Anmeldung zusätzliche Sitzungsdaten erzeugen kann. Nur die eigenen Neustart-Testdaten wurden anschliessend entfernt; die ursprünglichen Daten blieben erhalten.
+
+Die README wurde ausserdem mit einer sauberen Kopie des Git-Stands ff6886c ausprobiert. Diese Kopie hatte keine installierten Pakete, Build-Dateien oder vorhandenen Zugangsdaten. Sie erhielt neue lokale Einstellungen und eine eigene leere PostgreSQL-Datenbank. Paketinstallation, Datenbankeinrichtung, Demo-Konten, Beispielbücher und App-Start funktionierten nach der Anleitung. Beide Rollen konnten sich anmelden. Der Katalog zeigte drei Bücher und sechs verfügbare Exemplare.
+
+In der frischen Kopie bestanden 11 Unit-Tests, 13 Browser- und Integrationstestfälle sowie Lint, TypeScript und Build. Der fertige Produktionsbuild wurde zusätzlich kurz im Browser auf Anmeldung, Datenbanknachricht, Katalog und Rollenschutz geprüft. Es waren keine Änderungen am Anwendungscode nötig. Das Original läuft nach der Prüfung wieder. Die Testumgebung wurde gestoppt, ohne ein Volume zu löschen.
+
+Die Prüfung fand auf demselben Rechner mit bereits vorhandenen Werkzeugen statt. Ein neuer Rechner sowie ein Neustart von Windows oder Docker Desktop wurden nicht geprüft. Die bekannten Paketwarnungen und die beim Entwicklungstest beobachteten Stream-Meldungen stehen mit den genauen Ergebnissen in docs/testprotokoll.md.
+
+Für die Präsentation:
+
+"Ich habe geprüft, ob die Daten nach einem Neustart der App und der Datenbank noch vorhanden sind. Ausserdem habe ich das Projekt in einer sauberen Kopie mit einer leeren Datenbank nach meiner README eingerichtet. Beide Tests haben funktioniert."

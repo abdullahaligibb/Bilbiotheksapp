@@ -308,7 +308,7 @@ docker compose down
 
 Das Volume postgres_data speichert die Daten. Sie bleiben beim normalen Stoppen erhalten. Die zusätzliche Option -v würde das Volume und seine Daten löschen.
 
-Zum Prüfen der Speicherung kannst du die Datenbank stoppen, wieder starten und die Daten erneut lesen. Das ist ein eigener Testschritt.
+Zum Prüfen der Speicherung kannst du die Datenbank stoppen, wieder starten und die Daten erneut lesen. Dieser Neustarttest wurde am 21.10.2026 mit Büchern, Exemplaren, Benutzern sowie einer aktiven und einer abgeschlossenen Testausleihe bestanden. Auch die frische Einrichtung nach dieser Anleitung wurde in einer getrennten Kopie mit eigener leerer Datenbank geprüft. Ablauf und Grenzen stehen im [Testprotokoll](docs/testprotokoll.md).
 
 ## Code prüfen
 
