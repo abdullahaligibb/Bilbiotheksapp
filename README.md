@@ -2,7 +2,7 @@
 
 Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Bibliothekstabellen sind vorbereitet. Die eigentlichen Katalog- und Ausleihfunktionen folgen später.
+Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher und einzelne Exemplare hinzufügen und bearbeiten. Suche und Ausleihe folgen später.
 
 ## Verwendete Werkzeuge
 
@@ -74,6 +74,21 @@ Nach dem Login siehst du deinen Namen, die Rolle und die Testnachricht. Über **
 
 npm run demo:users legt fehlende Demo-Konten an. Bestehende Konten, Passwörter und Rollen werden dabei nicht überschrieben. Es gibt noch keine öffentliche Registrierung und keine Benutzerverwaltung auf der Webseite.
 
+## Bücher und Exemplare verwalten
+
+1. Melde dich mit dem Verwaltungskonto an.
+2. Öffne **Administration**, danach **Manage books and copies**.
+3. Mit **Add book** erstellst du ein Buch. Titel und Autor sind Pflichtfelder. ISBN, Verlag, Erscheinungsjahr, Kategorie und Beschreibung sind vorerst optional.
+4. Nach **Save book** öffnet sich die Bearbeitungsseite. Dort kannst du die Buchangaben ändern.
+5. Unter **Add copy** trägst du die Inventarnummer und den Standort eines Exemplars ein. Beide Angaben sind Pflichtfelder.
+6. Vorhandene Exemplare stehen beim jeweiligen Buch. Mit **Save copy** speicherst du Änderungen.
+
+Die Übersicht unter /admin/books zeigt die Bücher mit ihrer Anzahl Exemplare. Jedes Exemplar bleibt mit seinem Buch verbunden. Beim Bearbeiten bleiben die IDs erhalten. Es gibt keine Löschfunktion für Bücher, Exemplare oder Ausleihen.
+
+Der Server prüft bei jeder Speicheranfrage die Verwaltungsrolle und die Eingaben. Eine angegebene ISBN muss eine gültige ISBN-10 oder ISBN-13 sein. Leerzeichen und Bindestriche werden vor dem Speichern entfernt. Doppelte ISBNs und Inventarnummern werden mit einer Meldung abgelehnt. Eine leere ISBN wird als NULL gespeichert, damit mehrere Bücher ohne ISBN möglich sind. Die Datenbank schützt eindeutige Werte auch bei gleichzeitigen Anfragen. SQL-Platzhalter trennen die Eingaben vom SQL-Befehl.
+
+Die Textfelder haben einfache Längengrenzen: Titel, Autor und Verlag je 300 Zeichen, Kategorie 100, Beschreibung 5000, Inventarnummer 100 und Standort 200. Das Erscheinungsjahr liegt zwischen 1 und 9999. Diese Regeln werden auch auf dem Server geprüft. Vorhandene Daten werden dadurch nicht automatisch verändert.
+
 ## Was die Befehle machen
 
 - docker compose up startet PostgreSQL im Hintergrund und wartet, bis die Datenbank bereit ist.
@@ -95,7 +110,10 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/lib/auth-client.ts | Verbindung der Login-Buttons zu Better Auth |
 | src/app/login/ | Loginseite und Formular |
 | src/app/api/auth/[...all]/route.ts | Empfängt Login- und Logout-Anfragen |
-| src/app/admin/page.tsx | Einfache geschützte Seite für die Verwaltung |
+| src/app/admin/page.tsx | Geschützte Startseite für die Verwaltung |
+| src/app/admin/books/ | Übersicht, Buchformular und Formulare für Exemplare |
+| src/app/admin/books/actions.ts | Prüft Rechte und Eingaben und speichert Bücher und Exemplare |
+| src/lib/library-forms.ts | Gemeinsame Datentypen und einfache Prüfungen für IDs und ISBN |
 | scripts/setup-db.mjs | Liest die SQL-Dateien und führt sie aus |
 | scripts/create-demo-users.mjs | Erstellt fehlende Demo-Benutzer mit Passwort-Hashes |
 | database/setup.sql | Erstellt die Grundlage und die Testnachricht |

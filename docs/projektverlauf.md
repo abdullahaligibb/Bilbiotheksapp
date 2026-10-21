@@ -139,4 +139,44 @@ Für die Präsentation:
 
 ### Nächste Schritte
 
-Die Anmeldung und die Rollen sind jetzt die Grundlage für Katalog, Benutzerverwaltung und Ausleihe. Die Verwaltungsseite ist bisher nur eine einfache Seite zum Nachweis der Rechteprüfung. Die eigentlichen Verwaltungsfunktionen kommen im nächsten Schritt.
+Nach diesem Schritt war die Anmeldung die Grundlage für Katalog, Benutzerverwaltung und Ausleihe. Die Verwaltungsseite diente zunächst zum Nachweis der Rechteprüfung. Die Buchverwaltung folgt im nächsten Eintrag.
+
+## 21.10.2026: Bücher und Exemplare hinzufügen und bearbeiten
+
+### Was wurde gemacht?
+
+- Unter /admin/books gibt es eine Übersicht mit Titel, Autor, ISBN und Anzahl Exemplare.
+- Add book öffnet ein einfaches Buchformular. Es speichert Titel, Autor, ISBN, Verlag, Erscheinungsjahr, Kategorie und Beschreibung.
+- Nach dem Speichern kann die Verwaltung die Buchangaben bearbeiten und Exemplare hinzufügen.
+- Jedes Exemplar hat eine eigene Inventarnummer und einen Standort. Die Angaben können beim zugehörigen Buch bearbeitet werden.
+- Die Datenbanktabellen waren schon vorhanden. Dafür sind keine neue Migration und kein neues Paket nötig.
+- IDs und Buchverbindungen bleiben beim Bearbeiten erhalten. Es gibt in diesem Schritt keine Löschfunktion und keine Ausleihfunktion.
+
+### Wie funktioniert das Speichern?
+
+1. Das Formular schickt seine Eingaben an eine Server Action in actions.ts.
+2. requireAdmin prüft dort bei jeder Anfrage die Anmeldung und Rolle.
+3. Der Server prüft Pflichtfelder, Textlängen, Erscheinungsjahr und eine eingetragene ISBN.
+4. pg führt INSERT für neue Daten oder UPDATE für vorhandene Daten aus. Die Eingaben werden als SQL-Parameter übergeben.
+5. Bei einem Fehler bleiben die Eingaben im Formular erhalten. Bei Erfolg wird die Bearbeitungsseite mit den gespeicherten Daten angezeigt.
+
+Titel und Autor sind Pflichtfelder. Die weiteren Buchfelder bleiben vorerst optional. Für ein Exemplar sind Inventarnummer und Standort nötig. ISBN-10 und ISBN-13 werden mit ihrer Prüfziffer geprüft. Doppelte ISBNs und Inventarnummern verhindert zusätzlich die Datenbank.
+
+### Was wurde getestet?
+
+26 Prüfungen bestanden. Dazu gehören das Hinzufügen und Bearbeiten über die echten Browserformulare, der Vergleich mit den gespeicherten Daten, ungültige und doppelte ISBNs, doppelte Inventarnummern, erhaltene Eingaben nach einem Fehler und die Anzahl Exemplare in der Übersicht. Der Server lehnt auch einen Titel nur aus Leerzeichen und ein Erscheinungsjahr mit Nachkommastellen ab, wenn die Browserprüfung umgangen wird.
+
+Nicht angemeldete Besucher und normale Benutzer können weder die Verwaltungsseiten öffnen noch die Speicherfunktionen für Bücher und Exemplare direkt aufrufen. Nicht vorhandene oder ungültige Buch-IDs ergeben eine 404-Seite. Im Browser gab es keine JavaScript-Fehler. Nur die eigens erzeugten Testbücher und Testexemplare wurden nach den Prüfungen entfernt. Die vorhandenen Daten blieben erhalten. Lint, TypeScript und Produktionsbuild bestanden ebenfalls.
+
+### Welche Dateien gehören dazu?
+
+- src/app/admin/books/page.tsx: Übersicht.
+- src/app/admin/books/new/page.tsx: Neues Buch.
+- src/app/admin/books/[id]/page.tsx: Buch und zugehörige Exemplare bearbeiten.
+- book-form.tsx und copy-form.tsx: Die Formulare mit Fehlermeldungen und Speicherbutton.
+- actions.ts: Rechte prüfen, Eingaben prüfen und SQL ausführen.
+- src/lib/library-forms.ts: Datentypen und kleine Hilfsfunktionen.
+
+Für die Präsentation:
+
+"Ich speichere die Buchangaben einmal in books. Die einzelnen Bücher im Regal stehen als Exemplare in copies. Beim Speichern prüft mein Server zuerst die Verwaltungsrolle. Danach prüft er die Eingaben und speichert sie mit SQL. Ein normaler Benutzer darf diese Funktionen auch mit einer direkten Anfrage nicht ausführen."
