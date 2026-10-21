@@ -468,3 +468,17 @@ Die Tests decken Anmeldung, Rechte, Bücher, Exemplare, Suche, Benutzerverwaltun
 Alle 11 Unit-Tests und 13 App-Testfälle bestanden. Lint, TypeScript und Produktionsbuild bestanden ebenfalls. In diesen Abläufen wurde kein weiterer Funktionsfehler gefunden. Im Testcode wurde sichergestellt, dass ein Speichervorgang vor einem Neuladen abgeschlossen ist. Die bisherigen einzelnen Prüfbedingungen aus den temporären Skripten sind nicht mit der Anzahl dieser Testfälle gleichzusetzen.
 
 Die Testanleitung steht in der README. docs/testprotokoll.md enthält die Ergebnisse, Hinweise und offenen Punkte für die Präsentation. Frühere Einträge beschreiben jeweils den damaligen Stand vor dieser dauerhaften Testsuite.
+
+## 21.10.2026: Fiktive Bücher und Exemplare für die Übergabe
+
+scripts/create-demo-books.mjs ergänzt drei fiktive Bücher mit jeweils zwei Exemplaren. Der Befehl dafür ist npm run demo:books. Alle Buchfelder sind ausgefüllt. Die sechs Exemplare haben eigene Inventarnummern und Standorte. Die vorhandenen Demo-Konten bleiben bestehen. Ausleihen werden nicht automatisch angelegt; sie können über die normale Oberfläche gezeigt werden.
+
+Die Buchangaben sind erfunden. Die ISBNs sind Beispielwerte mit gültigen Prüfziffern. Die Bücher heissen Das Geheimnis im alten Bahnhof, Eine Reise durch die Sterne und Programmieren Schritt für Schritt.
+
+Das Skript verwendet eine Transaktion und INSERT ... ON CONFLICT DO NOTHING. Es ergänzt fehlende Datensätze und überschreibt keine bestehenden. Wenn eine Beispiel-ISBN bereits zu einem Buch mit anderem Titel oder Autor gehört, wird der Eintrag übersprungen. Vorhandene Inventarnummern bleiben ebenfalls erhalten. Die Beispieldaten werden nicht beim normalen Start der App neu gesetzt, sondern nur mit dem eigenen Befehl ergänzt.
+
+Das Skript wurde zweimal ausgeführt. Danach waren weiterhin genau drei Beispielbücher und sechs Exemplare vorhanden. Alle ISBN-Prüfziffern waren gültig, die Inventarnummern eindeutig und die Buchfelder ausgefüllt. Prüfsummen bestätigten, dass vorhandene Daten unverändert blieben und der zweite Aufruf keine bestehenden Zeilen änderte. Im Browser waren alle drei Bücher mit jeweils zwei verfügbaren Exemplaren und funktionierenden Buchseiten sichtbar. Lint und TypeScript bestanden.
+
+Für die Präsentation:
+
+"Für die Übergabe gibt es drei fiktive Bücher mit jeweils zwei Exemplaren. Das Skript kann die Beispieldaten erneut anlegen, ohne bestehende Angaben oder Ausleihen zu überschreiben."

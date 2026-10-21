@@ -52,6 +52,8 @@ Node.js kann beim Importieren der TypeScript-Hilfsfunktionen einen Hinweis zur E
 
 ## Grenzen und offene Punkte
 
+Zusätzliche Prüfung der Übergabedaten am 21.10.2026: Drei fiktive Bücher mit jeweils zwei Exemplaren wurden angelegt. Ein zweiter Aufruf des Skripts erzeugte keine Duplikate und veränderte keine bestehenden Zeilen. Die vollständigen Buchangaben, gültigen ISBN-Prüfziffern und eindeutigen Inventarnummern wurden geprüft. Alle Bücher und ihre verfügbaren Exemplare waren im Browser sichtbar. Lint und TypeScript bestanden auch nach dieser Ergänzung.
+
 - Die Tests decken die wichtigsten Abläufe und ausgewählte Fehlerfälle ab. Sie beweisen nicht, dass jeder mögliche Fehler ausgeschlossen ist.
 - Die vorgeschlagene Ausleihfrist von 30 Tagen muss noch bestätigt werden.
 - Eine komplette Installation auf einem neuen Rechner und ein Neustart von Docker wurden in diesem Durchlauf nicht getestet.

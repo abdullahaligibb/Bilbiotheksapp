@@ -57,6 +57,7 @@ Danach:
 docker compose up -d --wait
 npm.cmd run db:setup
 npm.cmd run demo:users
+npm.cmd run demo:books
 npm.cmd run dev
 ```
 
@@ -74,6 +75,20 @@ Die Passwörter stehen nur in deiner ignorierten .env.local unter DEMO_USER_PASS
 Nach dem Login siehst du deinen Namen, die Rolle und die Testnachricht. Über **Sign out** meldest du dich ab. Nur die Verwaltung kann /admin öffnen. Ein normaler Benutzer wird dort zur Seite **Access denied** weitergeleitet. Ohne Anmeldung führen die Startseite und /admin zur Loginseite.
 
 npm run demo:users legt fehlende Demo-Konten an. Bestehende Konten, Passwörter und Rollen werden dabei nicht überschrieben. Es gibt weiterhin keine öffentliche Registrierung. Weitere Konten erstellt die Verwaltung auf der Webseite.
+
+## Beispielbücher für die Übergabe
+
+Mit `npm.cmd run demo:books` werden drei fiktive Bücher mit jeweils zwei Exemplaren angelegt:
+
+| Titel | Autor | Kategorie | Inventarnummern | Standort |
+| --- | --- | --- | --- | --- |
+| Das Geheimnis im alten Bahnhof | Mara Keller | Krimi | DEMO-B001-01 und DEMO-B001-02 | Regal A1 |
+| Eine Reise durch die Sterne | Noah Sommer | Abenteuer | DEMO-B002-01 und DEMO-B002-02 | Regal B2 |
+| Programmieren Schritt für Schritt | Lea Winter | Informatik | DEMO-B003-01 und DEMO-B003-02 | Regal C3 |
+
+Alle Buchangaben sind fiktiv. Die ISBNs dienen als Beispielwerte mit gültigen Prüfziffern. Die Bücher haben auch Verlag, Erscheinungsjahr und Beschreibung. Nach dem Anlegen sind die sechs neuen Exemplare verfügbar und können über die normale Oberfläche ausgeliehen werden. Es werden keine Ausleihen vorgegeben.
+
+Der Befehl kann erneut ausgeführt werden. Er ergänzt nur fehlende Bücher und Inventarnummern. Vorhandene Buchangaben, Standorte, Benutzer und Ausleihen werden nicht überschrieben. Wenn die Beispiel-ISBN bereits zu einem Buch mit anderem Titel oder Autor gehört, wird dieses Buch übersprungen. Eine bereits verwendete Inventarnummer bleibt ebenfalls unverändert. Die Beispieldaten bleiben im Katalog erhalten; die automatischen Tests entfernen nur ihre eigenen Testdaten.
 
 ## Benutzer verwalten
 
@@ -197,6 +212,7 @@ Benutzerangaben werden über das geprüfte Verwaltungsformular geändert. Der un
 - docker compose up startet PostgreSQL im Hintergrund und wartet, bis die Datenbank bereit ist.
 - npm run db:setup führt database/setup.sql, 001_library_schema.sql und 002_authentication.sql in dieser Reihenfolge aus. Die letzten beiden Dateien stehen unter database/migrations. Vorhandene Daten bleiben erhalten. Es zeigt keine Datensätze im Terminal an.
 - npm run demo:users erstellt die beiden lokalen Demo-Konten. Better Auth erstellt die Passwort-Hashes.
+- npm run demo:books ergänzt drei fiktive Bücher mit jeweils zwei Exemplaren. Bestehende Datensätze bleiben erhalten.
 - npm run dev startet die Webseite und den Next.js-Server auf dem Rechner.
 
 setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_schema.sql erweitert das Bibliotheksmodell. 002_authentication.sql ergänzt die Anmeldung. Jede Erweiterung verwendet eine Transaktion: Entweder wird sie vollständig ausgeführt oder bei einem Fehler zurückgenommen. Die Dateien können erneut ausgeführt werden. Weitere Migrationsdateien werden noch nicht automatisch erkannt.
@@ -230,6 +246,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/lib/user-forms.ts | Datentyp für sichtbare Benutzerangaben und Prüfung des E-Mail-Formats |
 | scripts/setup-db.mjs | Liest die SQL-Dateien und führt sie aus |
 | scripts/create-demo-users.mjs | Erstellt fehlende Demo-Benutzer mit Passwort-Hashes |
+| scripts/create-demo-books.mjs | Ergänzt die fiktiven Beispielbücher und ihre Exemplare |
 | database/setup.sql | Erstellt die Grundlage und die Testnachricht |
 | database/migrations/001_library_schema.sql | Ergänzt die Bibliothekstabellen |
 | database/migrations/002_authentication.sql | Ergänzt die Tabellen für die Anmeldung |

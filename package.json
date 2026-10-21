@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/validation.test.mjs",
     "test:app": "node --test --test-concurrency=1 tests/app.test.mjs",
-    "demo:users": "node scripts/create-demo-users.mjs"
+    "demo:users": "node scripts/create-demo-users.mjs",
+    "demo:books": "node scripts/create-demo-books.mjs"
   },
   "dependencies": {
     "@next/env": "^16.4.2",
