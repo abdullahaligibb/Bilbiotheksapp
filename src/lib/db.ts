@@ -5,7 +5,7 @@ type DatabaseCache = {
   pgPool?: Pool;
 };
 
-// Remember the connection pool when Next.js reloads a saved file.
+// Keep the pool when Next.js reloads a saved file.
 const globalForPg = globalThis as unknown as DatabaseCache;
 
 export function getPool() {
@@ -15,12 +15,12 @@ export function getPool() {
     throw new Error('Missing DATABASE_URL in .env.local');
   }
 
-  // Reuse the existing pool if we already made one.
+  // Use the pool we already have.
   if (globalForPg.pgPool) {
     return globalForPg.pgPool;
   }
 
-  // Otherwise, make a new pool with the same connection settings.
+  // If there is no pool yet, create one.
   const pool = new Pool({
     connectionString: databaseUrl,
     max: 5,
@@ -28,7 +28,7 @@ export function getPool() {
     idleTimeoutMillis: 30000,
   });
 
-  // Handle idle connections closing, for example when Docker stops.
+  // Handle a closed connection, for example when Docker stops.
   pool.on('error', function () {
     console.error('An idle database connection closed. Check Docker.');
   });
@@ -37,6 +37,6 @@ export function getPool() {
   return pool;
 }
 
-// Both projects support the CRUD page's `import pool from "../lib/db"`.
+// A page can also use: import pool from "../lib/db".
 const pool = getPool();
 export default pool;

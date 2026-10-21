@@ -1,4 +1,4 @@
--- Repeatable setup: preserves existing messages.
+-- You can run this file again. Existing messages are kept.
 CREATE TABLE IF NOT EXISTS setup_check (
   id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   message text NOT NULL

@@ -1,42 +1,52 @@
-# Bibliotheksapp - Meilenstein 1
+# Bibliotheksapp
 
-Eine lokale Next.js-App liest eine gespeicherte Testinformation serverseitig aus PostgreSQL. Die Datenbank läuft in Docker. Bücherverwaltung und Ausleihe folgen später.
+Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-## Voraussetzungen und Versionen
+Die Startseite zeigt **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Tabellen für Bücher, Exemplare, Benutzer und Ausleihen sind vorbereitet. Anmeldung und die neuen Funktionen auf der Webseite folgen später.
 
-Stand: 19.10.2026. Durchgehende Windows-Umgebung mit PowerShell.
+## Verwendete Werkzeuge
 
-| Werkzeug | Verwendete Version |
+Stand der erfassten Versionen: 19.10.2026.
+
+| Werkzeug | Version |
 | --- | --- |
 | VS Code | 1.142.0 |
 | Git | 2.45.1.windows.1 |
 | Node.js / npm | 24.9.0 / 11.6.0 |
 | Docker Engine / Compose | 28.4.0 / 2.39.4-desktop.1 |
-| PostgreSQL | 18.6 (Image postgres:18) |
-| Next.js / @next/env | 16.4.2 |
-| React / React DOM | 19.3.0 |
+| PostgreSQL | 18.6, Image postgres:18 |
+| Next.js / React | 16.4.2 / 19.3.0 |
 | pg | 8.23.1 |
 | TypeScript / ESLint | 5.9.3 / 9.39.5 |
 
-Node 24.x wird in package.json vorausgesetzt; .nvmrc enthält 24.9.0. Exakte npm-Abhängigkeiten stehen in package-lock.json. Docker Desktop muss laufen. Ports 3000 und 5432 müssen frei sein. postgres:18 kann neuere Patchversionen beziehen und bleibt bei Hauptversion 18.
+Ich verwende Node.js 24.x. .nvmrc hält die verwendete Version fest. package-lock.json enthält die genauen Paketversionen. Das Docker-Image bleibt bei PostgreSQL 18, kann aber neuere Fehlerkorrekturen dieser Version erhalten.
 
-## Frische Arbeitskopie einrichten
+## Projekt auf einem neuen Rechner einrichten
 
-Öffne diesen Ordner in VS Code und ein PowerShell-Terminal darin. Ich verwende npm.cmd, damit eine PowerShell-Ausführungsrichtlinie für npm.ps1 keine Probleme verursacht.
+Docker Desktop muss laufen. Öffne den Projektordner in VS Code und dort ein PowerShell-Terminal. Die Ports 3000 und 5432 müssen frei sein.
+
+Installiere die Pakete:
 
 ```powershell
 npm.cmd ci
+```
+
+Erstelle die lokalen Konfigurationsdateien. Das ist nur nötig, wenn sie noch nicht vorhanden sind:
+
+```powershell
 Copy-Item .env.example .env
 Copy-Item .env.local.example .env.local
 ```
 
-Bearbeite beide neuen Dateien im Editor:
+Öffne beide neuen Dateien im Editor:
 
-- .env: Ersetze POSTGRES_PASSWORD durch ein eigenes lokales Passwort aus Buchstaben und Ziffern.
-- .env.local: Ersetze den Passwort-Platzhalter in DATABASE_URL durch genau dasselbe Passwort.
-- Benutzer bibliothek_app, Datenbank bibliothek und localhost:5432 bleiben wie in den Beispielen.
+- In .env ersetzt du POSTGRES_PASSWORD durch ein eigenes lokales Passwort aus Buchstaben und Ziffern.
+- In .env.local trägst du dasselbe Passwort in DATABASE_URL ein.
+- Benutzer bibliothek_app, Datenbank bibliothek und localhost:5432 bleiben wie im Beispiel.
 
-Die bereits eingerichtete Arbeitskopie besitzt diese Dateien mit einem zufälligen lokalen Passwort. Zum Starten musst du dort nichts ändern. Die echten Dateien werden von Git ignoriert.
+.env und .env.local enthalten echte Zugangsdaten und werden nicht mit Git geteilt. Die Beispieldateien enthalten keine echten Passwörter.
+
+Danach:
 
 ```powershell
 docker compose up -d --wait
@@ -44,109 +54,122 @@ npm.cmd run db:setup
 npm.cmd run dev
 ```
 
-Öffne http://localhost:3000. Erwartet: die Überschrift **Bibliotheksapp** und der aus PostgreSQL gelesene Text **Datenbankverbindung erfolgreich**.
+Öffne die Adresse aus dem Terminal, normalerweise http://localhost:3000.
 
-## Was passiert dabei?
+## Was die Befehle machen
 
-1. compose.yaml startet PostgreSQL 18 und bindet Port 5432 nur an die lokale Schnittstelle.
-2. scripts/setup-db.mjs lädt mit @next/env die Next.js-Umgebung einschließlich .env.local.
-3. database/setup.sql erzeugt setup_check mit id und message und legt eine Testzeile an. Wiederholtes Ausführen erhält vorhandene Daten.
-4. src/lib/db.ts erzeugt einen wiederverwendeten Pool von Datenbankverbindungen. server-only verhindert den Import in Client Components.
-5. src/app/page.tsx ist eine async Server Component. Sie führt SELECT id, message FROM setup_check ORDER BY id aus und rendert die echten Ergebnisse.
-6. force-dynamic und deaktivierte Cache Components sorgen für eine frische Abfrage bei jedem Seitenabruf. Zum erneuten Abrufen die Seite im Browser neu laden.
+- docker compose up startet PostgreSQL im Hintergrund und wartet, bis die Datenbank bereit ist.
+- npm run db:setup führt database/setup.sql und danach database/migrations/001_library_schema.sql aus. Vorhandene Daten bleiben erhalten. Es zeigt keine Datensätze im Terminal an.
+- npm run dev startet die Webseite und den Next.js-Server auf dem Rechner.
 
-Datenweg: Browser -> Next.js auf Windows -> PostgreSQL in Docker -> Next.js -> sichtbarer Text. Der Browser erhält kein Datenbankpasswort.
+Die erste SQL-Datei erstellt die Testnachricht und die einfache Buchtabelle. Die zweite erweitert das Datenmodell. Sie verwendet eine Transaktion: Entweder wird diese Erweiterung vollständig ausgeführt oder bei einem Fehler zurückgenommen. Beide Dateien können erneut ausgeführt werden. Weitere Migrationsdateien werden noch nicht automatisch erkannt.
 
-## Selbst ausprobieren: Nachricht ändern
+## Ordner und Dateien
 
-Lass den Entwicklungsserver in seinem Terminal laufen. Öffne ein zweites Terminal im Projektordner:
+| Datei oder Ordner | Aufgabe |
+| --- | --- |
+| src/app/page.tsx | Liest die Testnachricht und zeigt sie an |
+| src/app/layout.tsx | Gemeinsamer HTML-Rahmen der Seite |
+| src/lib/db.ts | Verwaltet die Verbindung zur Datenbank |
+| scripts/setup-db.mjs | Liest die SQL-Dateien und führt sie aus |
+| database/setup.sql | Erstellt die Grundlage und die Testnachricht |
+| database/migrations/001_library_schema.sql | Ergänzt die Bibliothekstabellen |
+| compose.yaml | Einstellungen für PostgreSQL in Docker |
+| docs/projektverlauf.md | Entscheidungen und Notizen für die Präsentation |
+
+## Datenmodell
+
+| Tabelle | Inhalt |
+| --- | --- |
+| books | Angaben zum Buch, zum Beispiel Titel, Autor und ISBN |
+| copies | Die einzelnen Exemplare mit Inventarnummer und Standort |
+| users | Benutzer mit E-Mail, Passwort-Hash und Rolle |
+| loans | Ausleihen mit Benutzer, Exemplar und Datumsangaben |
+| setup_check | Die Testnachricht für den Verbindungstest |
+
+Ein Buch kann mehrere Exemplare haben. Eine Ausleihe gehört zu einem Benutzer und einem Exemplar. Ein Exemplar darf nur eine aktive Ausleihe haben.
+
+Die neuen Buchfelder sind vorerst optional, damit bisherige Formulare weiter funktionieren. books.borrowed bleibt für den alten Übungscode bestehen. Im geplanten Ausleihsystem wird die Verfügbarkeit aus loans berechnet.
+
+password_hash ist erst die vorbereitete Spalte. Die Anmeldung und das Erstellen sicherer Passwort-Hashes fehlen noch. Die Rollen heissen user und admin. Das sind Rollen in der App, keine PostgreSQL-Konten.
+
+## Verbindungstest selbst ausprobieren
+
+Die Startseite liest setup_check bei jedem Seitenaufruf. Die Abfrage läuft auf dem Server. Der Browser erhält das Datenbankpasswort nicht.
+
+Öffne ein zweites Terminal im Projektordner:
 
 ```powershell
 docker compose exec db psql -U bibliothek_app -d bibliothek
 ```
 
-Gib in psql ein:
+In psql:
 
 ```sql
 SELECT * FROM setup_check;
 UPDATE setup_check SET message = 'Hallo aus meiner Datenbank!' WHERE id = 1;
-SELECT * FROM setup_check;
 ```
 
-Lade die Seite im Browser neu. Der neue Text muss erscheinen. Verlasse psql mit `\q`.
+Lade die Webseite neu. Jetzt sollte die neue Nachricht erscheinen. Mit `\q` verlässt du psql.
 
-Zum Zurücksetzen der Nachricht:
+## Stoppen und Daten behalten
 
-```sql
-UPDATE setup_check SET message = 'Datenbankverbindung erfolgreich' WHERE id = 1;
-```
-
-## Datenpersistenz prüfen
-
-Beende eine offene psql-Sitzung und führe aus:
+Den Next.js-Server stoppst du mit Strg+C in seinem Terminal.
 
 ```powershell
 docker compose down
-docker compose up -d --wait
-docker compose exec -T db psql -U bibliothek_app -d bibliothek -c "SELECT * FROM setup_check;"
 ```
 
-Lade auch die App neu. Die Zeile bleibt vorhanden: Das benannte Volume postgres_data speichert die Daten unabhängig vom Container. Die zusätzliche Option `-v` beim Entfernen würde die lokalen Daten löschen und gehört nicht zum normalen Stoppen.
+Das Volume postgres_data speichert die Daten. Sie bleiben beim normalen Stoppen erhalten. Die zusätzliche Option -v würde das Volume und seine Daten löschen.
 
-## Starten, stoppen und prüfen
+Zum Prüfen der Speicherung kannst du die Datenbank stoppen, wieder starten und die Daten erneut lesen. Das ist ein eigener Testschritt.
+
+## Code prüfen
 
 ```powershell
-# Datenbank starten
-docker compose up -d --wait
-# Entwicklungsserver starten
-npm.cmd run dev
-# Entwicklungsserver stoppen: Strg+C im zugehörigen Terminal
-# Datenbank stoppen, Daten bleiben erhalten
-docker compose down
-# Code prüfen
 npm.cmd run lint
 npm.cmd run typecheck
 npm.cmd run build
-# Produktionsbuild lokal starten, Entwicklungsserver vorher stoppen
-npm.cmd run start
 ```
 
-## Entscheidungen
+Für einen lokalen Start des fertigen Builds verwendest du npm.cmd run start. Stoppe vorher einen laufenden Entwicklungsserver auf demselben Port.
 
-- TypeScript: erkennt Typfehler vor dem Start.
-- App Router und Server Component: direkte Datenbankabfrage auf dem Server ohne zusätzlichen API-Endpunkt.
-- pg: kleiner PostgreSQL-Treiber; SQL bleibt sichtbar und für diesen Meilenstein erklärbar. Kein ORM und keine ORM-Migrationen.
-- SQL-Skript: wiederholbarer Schemaaufbau für den Verbindungstest. Künftige Schemaänderungen sollten als versionierte Migrationen ergänzt werden.
-- Darstellung: einfache HTML-Überschrift und Datenbanktext ohne eigenes Layout oder zusätzliches Styling.
-- ESLint: prüft typische JavaScript-, React- und Next.js-Probleme.
-- @next/env: das Setup-Skript verwendet dieselben Umgebungsdateien wie Next.js.
-- Systemschriften: der Build benötigt keinen Font-Download.
+## Warum diese Pakete?
 
-## Fehlerbehebung
+- pg verbindet den Server mit PostgreSQL. Ich schreibe SQL direkt und verwende kein ORM.
+- @types/pg hilft TypeScript beim Prüfen des Datenbankcodes.
+- server-only verhindert, dass Datenbankcode in Browser-Komponenten importiert wird.
+- @next/env lädt die Umgebungsdateien für das Setup-Skript.
+- ESLint prüft typische Fehler im Code.
 
-- Docker nicht erreichbar: Docker Desktop starten; docker info muss den Server erreichen.
-- PowerShell blockiert npm.ps1: npm.cmd verwenden; keine systemweite Richtlinie ändern.
-- Port 5432 belegt: in compose.yaml den Host-Port auf 5433 ändern und in .env.local ebenfalls localhost:5433 verwenden.
-- Passwort abgelehnt: beide Dateien vergleichen. POSTGRES_* initialisiert nur ein leeres Volume; eine Änderung in .env ändert kein bestehendes Datenbankpasswort.
-- Nach Änderungen an .env.local: Next.js mit Strg+C beenden und neu starten.
-- Fehler bei der Datenbankabfrage: Container mit docker compose ps prüfen, dann npm.cmd run db:setup ausführen.
-- Leere Tabelle: npm.cmd run db:setup erzeugt die Testzeile.
-- Build-Konflikt mit force-dynamic: Cache Components sind für diesen Verbindungstest ausdrücklich deaktiviert.
-- @next/env in einem .mjs-Skript: CommonJS-Defaultimport verwenden und nextEnv.loadEnvConfig aufrufen.
+## Häufige Probleme
 
-## Bekannte Abhängigkeitsmeldung
+- Docker nicht erreichbar: Docker Desktop öffnen und mit docker info prüfen.
+- PowerShell blockiert npm.ps1: npm.cmd verwenden.
+- Port 5432 belegt: Den Host-Port in compose.yaml und DATABASE_URL passend ändern.
+- Passwort abgelehnt: Beide Umgebungsdateien vergleichen. Ein neues Passwort in .env ändert kein Passwort einer bereits eingerichteten Datenbank.
+- Änderung an .env.local: Den Next.js-Server stoppen und neu starten.
+- Tabelle fehlt: Die verwendete Datenbank prüfen und npm.cmd run db:setup ausführen.
+- Fehler bei instant oder force-dynamic: Dieses Projekt verwendet cacheComponents: false und dynamic = 'force-dynamic'.
 
-Erneut geprüft am 19.10.2026: npm audit meldet weiterhin fünf hohe Einträge in einer gemeinsamen Entwicklungstool-Kette: eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces. Die Einträge gehen auf dieselbe Schwachstelle in braces 3.0.3 zurück: speziell verschachtelte Muster können den verarbeitenden Node.js-Prozess zum Absturz bringen. Laut [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) gibt es derzeit keine korrigierte Version; npm nennt 3.0.3 als neueste Version.
+## Bekannte Paketwarnung
 
-Der automatisch vorgeschlagene Fix wäre ein Downgrade von eslint-config-next auf 14.2.35. Dieses wurde nicht angewendet, da die Konfiguration zu Next.js 16 passen soll. Die betroffene Kette gehört hier zu den Entwicklungswerkzeugen; die Seite nimmt keine Muster von Benutzern entgegen. npm.cmd audit --omit=dev meldet null bekannte Schwachstellen in den Produktionsabhängigkeiten. Das ist keine allgemeine Sicherheitsgarantie. Die Meldung bleibt offen und sollte bei späteren Updates erneut geprüft werden.
+Bei der Prüfung am 19.10.2026 meldete npm audit fünf hohe Einträge. Sie gehören zur selben Kette in den Entwicklungswerkzeugen: eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces.
+
+Die Schwachstelle betrifft braces 3.0.3. Stark verschachtelte Muster können den Node.js-Prozess zum Absturz bringen. Bei dieser Prüfung gab es laut [Sicherheitsmeldung](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) keine korrigierte Version. npm.cmd audit --omit=dev meldete null bekannte Schwachstellen in den Produktionspaketen.
+
+Der vorgeschlagene automatische Fix hätte eslint-config-next auf Version 14 zurückgesetzt. Dieser Wechsel wurde nicht durchgeführt, weil das Projekt Next.js 16 verwendet. Die Warnung bleibt offen und muss bei späteren Paketupdates erneut geprüft werden. Die damalige Prüfung ist keine allgemeine Sicherheitsgarantie.
 
 ## Git und Übergabe
 
-Quellcode, compose.yaml, SQL, README, package-lock.json und beide Beispieldateien gehören ins Repository. .env, .env.local, node_modules und .next sind ausgeschlossen. Vor einem Commit git status prüfen. Diese lokale App verwendet einen PostgreSQL-Superuser für Entwicklung; für eine Bereitstellung wäre ein eigenes Berechtigungskonzept nötig.
+Quellcode, SQL-Dateien, README, compose.yaml, package-lock.json und die Beispieldateien gehören ins Repository. .env, .env.local, node_modules und .next werden ausgeschlossen.
+
+Die lokale Datenbank verwendet für die Entwicklung einen PostgreSQL-Superuser. Für einen späteren Einsatz ausserhalb der lokalen Übung müssen die Datenbankrechte passend eingerichtet werden.
+
+Die bisherigen Schritte und die offenen Aufgaben stehen in [docs/projektverlauf.md](docs/projektverlauf.md).
 
 ## Offizielle Dokumentation
 
-- [Next.js Installation](https://nextjs.org/docs/app/getting-started/installation)
-- [Server Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
+- [Next.js](https://nextjs.org/docs/app/getting-started/installation)
 - [node-postgres](https://node-postgres.com/features/queries)
 - [PostgreSQL-Image](https://hub.docker.com/_/postgres)
