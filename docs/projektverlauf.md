@@ -346,3 +346,48 @@ Alle erzeugten Testdaten wurden entfernt. Die bestehenden Buch-, Exemplar- und A
 Für die Präsentation:
 
 "Beim Ausleihen prüft mein Server die Anmeldung und sperrt das Exemplar kurz in einer Transaktion. Dann prüft er nochmals die Verfügbarkeit und speichert eine neue Ausleihe mit Datum und Frist. So können zwei Personen nicht dasselbe Exemplar gleichzeitig bekommen."
+
+## 21.10.2026: Rückgabe durch die Verwaltung
+
+### Was wurde gemacht?
+
+- Unter Administration → Loans and returns sieht die Verwaltung alle aktiven Ausleihen.
+- Die Tabelle zeigt Buch, Inventarnummer, Name und E-Mail der ausleihenden Person, Ausleihdatum und Rückgabefrist.
+- Record return erfasst die Rückgabe nach dem Erhalt des Exemplars.
+- PostgreSQL setzt das aktuelle Datum in returned_at. Die Ausleihe bleibt gespeichert.
+- Das Exemplar wird wieder verfügbar und die abgeschlossene Ausleihe verschwindet aus den aktiven Listen.
+- Normale Benutzer dürfen keine Rückgabe erfassen. Sowohl die Seite als auch die Server Action prüfen die Verwaltungsrolle.
+- Die vorhandenen Tabellen und Pakete reichen aus. Die Ansicht der abgeschlossenen Historie folgt später.
+
+### Wie funktioniert die Rückgabe?
+
+1. Die Server Action returnLoan prüft mit requireAdmin die Rolle und danach die Ausleih-ID.
+2. Ein UPDATE setzt returned_at auf CURRENT_TIMESTAMP, aber nur für eine Ausleihe ohne Rückgabedatum.
+3. Die Datenbank gibt die Buch-ID zurück, damit die zugehörigen Seiten aktualisiert werden können.
+4. Nach erfolgreichem Speichern erscheint wieder die Verwaltungsübersicht mit einer Bestätigung.
+
+Hier reicht ein einzelner SQL-Befehl. Die Prüfung und Änderung passieren gemeinsam. Eine zusätzliche Transaktion mit mehreren Befehlen ist dafür nicht nötig. Bei zwei gleichzeitigen Rückgabeanfragen kann nur die erste eine noch aktive Zeile ändern. Die zweite erkennt, dass diese Ausleihe schon zurückgegeben wurde.
+
+Benutzer, Exemplar, Ausleihdatum und Frist bleiben unverändert. Wird das Exemplar später erneut ausgeliehen, entsteht eine neue Ausleih-ID. Eine alte Rückgabeanfrage kann diese neue Ausleihe deshalb nicht beenden.
+
+### Welche Dateien gehören dazu?
+
+- src/app/admin/loans/page.tsx: Übersicht der aktiven Ausleihen für die Verwaltung.
+- src/app/admin/loans/return-button.tsx: Rückgabebutton mit Wartezustand und Fehlermeldung.
+- src/app/admin/loans/actions.ts: Rechte prüfen und Rückgabedatum speichern.
+- src/app/admin/page.tsx: Link zur Rückgabeübersicht.
+- src/app/books/borrow-actions.ts: Aktualisiert nach einer neuen Ausleihe auch die Verwaltungsübersicht.
+
+### Was wurde geprüft?
+
+31 gezielte Prüfungen bestanden. Der echte Rückgabebutton setzte das aktuelle Rückgabedatum. Ausleih-ID, Benutzer, Exemplar, Ausleihdatum und Frist blieben unverändert. Die abgeschlossene Ausleihe verschwand aus beiden aktiven Listen, blieb aber in der Datenbank erhalten. Die Suche zeigte das Exemplar danach wieder als verfügbar an.
+
+Normale Benutzer und nicht angemeldete Besucher konnten weder die Verwaltungsseite öffnen noch die Rückgabefunktion direkt aufrufen. Eine veraltete Seite und ein doppelter Klick überschrieben das gespeicherte Rückgabedatum nicht. Bei zwei gleichzeitigen Rückgabeanfragen war genau eine erfolgreich; die andere erhielt eine Meldung.
+
+Das zurückgegebene Exemplar konnte erneut ausgeliehen werden. Die neue Ausleihe erhielt eine neue ID und wurde durch eine alte Rückgabeanfrage nicht beendet. Sie konnte danach regulär zurückgegeben werden. Frühere abgeschlossene Ausleihen blieben unverändert. Fehlende Ausleihen und eine leere aktive Liste wurden ebenfalls geprüft. Es gab keine JavaScript-Fehler im Browser.
+
+Nur eigens angelegte Testdaten wurden verändert und anschliessend entfernt. Die vorhandenen Buch-, Exemplar- und Ausleihdaten blieben laut Prüfsummen unverändert. Lint, TypeScript und Produktionsbuild bestanden. Die dauerhafte Testsuite folgt wie besprochen am Ende.
+
+Für die Präsentation:
+
+"Nur die Verwaltung darf eine Rückgabe erfassen. Ich lösche die Ausleihe nicht, sondern setze ihr Rückgabedatum. Dadurch wird das Exemplar wieder verfügbar und die Ausleihe bleibt für die Historie erhalten. Die Prüfung auf dem Server verhindert Rückgaben durch normale Benutzer."

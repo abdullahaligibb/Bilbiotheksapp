@@ -61,5 +61,6 @@ export async function borrowCopy(copyId: number): Promise<FormState> {
   revalidatePath('/books');
   revalidatePath(`/books/${bookId}`);
   revalidatePath('/loans');
+  revalidatePath('/admin/loans');
   redirect('/loans?borrowed=yes');
 }

@@ -2,7 +2,7 @@
 
 Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten. Alle angemeldeten Benutzer können nach Büchern suchen, verfügbare Exemplare für sich ausleihen und ihre aktiven Ausleihen ansehen. Die Rückgabe folgt später.
+Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten sowie Rückgaben erfassen. Alle angemeldeten Benutzer können nach Büchern suchen, verfügbare Exemplare für sich ausleihen und ihre aktiven Ausleihen ansehen.
 
 ## Verwendete Werkzeuge
 
@@ -127,7 +127,20 @@ Jede Ausleihe ist eine neue Zeile in loans. returned_at bleibt leer, solange das
 
 Die Speicherung verwendet eine kurze Transaktion. SELECT ... FOR UPDATE sperrt dabei genau die Zeile des Exemplars bis zum Abschluss. Eine zweite gleichzeitige Anfrage muss warten und prüft danach die Verfügbarkeit erneut. Zusätzlich verhindert der vorhandene eindeutige Index zwei aktive Ausleihen desselben Exemplars. Bei einem Fehler wird die neue Änderung zurückgenommen. Bei einer bereits vergebenen oder gelöschten Kopie erscheint eine Fehlermeldung.
 
-Die Rückgabe durch die Verwaltung und eine Ansicht der abgeschlossenen Ausleihen folgen später. Vorhandene Ausleihen und frühere Rückgaben werden durch eine neue Ausleihe nicht überschrieben.
+Vorhandene Ausleihen und frühere Rückgaben werden durch eine neue Ausleihe nicht überschrieben. Eine Ansicht der abgeschlossenen Ausleihen folgt später.
+
+## Rückgabe erfassen
+
+1. Melde dich als Verwaltung an und öffne **Administration → Loans and returns**.
+2. Die Tabelle zeigt alle aktiven Ausleihen mit Buch, Inventarnummer, Name und E-Mail der ausleihenden Person sowie Ausleihdatum und Rückgabefrist.
+3. Nachdem du das Exemplar zurückerhalten hast, klicke in der passenden Zeile auf **Record return**.
+4. Der Server setzt das aktuelle Rückgabedatum. Die Ausleihe verschwindet aus den aktiven Listen und das Exemplar ist wieder verfügbar, bis es erneut ausgeliehen wird.
+
+Normale Benutzer können keine Rückgabe erfassen, auch nicht über eine direkte Anfrage an die Speicherfunktion. requireAdmin prüft das bei jedem Aufruf auf dem Server. Die Seite /admin/loans ist ebenfalls nur für die Verwaltung erreichbar.
+
+Die Rückgabe ist ein einzelner UPDATE-Befehl: Er setzt returned_at nur dann, wenn dieses Feld noch leer ist. Die Ausleihe bleibt mit ihrer ID, ihrem Benutzer, Exemplar, Ausleihdatum und ihrer Frist gespeichert. So ist die Grundlage für die spätere Historienansicht erhalten. Ein wiederholter oder gleichzeitiger Rückgabeversuch überschreibt das erste Rückgabedatum nicht. Eine alte Rückgabeanfrage kann auch keine spätere neue Ausleihe desselben Exemplars beenden, weil sie nur die ursprüngliche Ausleih-ID verwendet.
+
+Für diesen Schritt sind keine neue Tabelle und kein neues Paket nötig. Ist die Ausleihe bereits abgeschlossen oder nicht mehr vorhanden, erscheint eine kurze Meldung. Nach einer Rückgabe werden die betroffenen Seiten neu eingelesen.
 
 ## Bücher und Exemplare verwalten
 
@@ -176,6 +189,9 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/lib/library-forms.ts | Gemeinsame Datentypen und einfache Prüfungen für IDs und ISBN |
 | src/app/admin/users/ | Benutzerübersicht sowie Formulare zum Anlegen und Bearbeiten |
 | src/app/admin/users/actions.ts | Prüft Rechte, erstellt Passwortkonten und speichert Benutzeränderungen |
+| src/app/admin/loans/page.tsx | Verwaltungsübersicht aller aktiven Ausleihen |
+| src/app/admin/loans/return-button.tsx | Rückgabebutton mit Wartezustand und Fehlermeldung |
+| src/app/admin/loans/actions.ts | Prüft Verwaltungsrechte und setzt das Rückgabedatum |
 | src/lib/user-forms.ts | Datentyp für die sichtbaren Benutzerangaben |
 | scripts/setup-db.mjs | Liest die SQL-Dateien und führt sie aus |
 | scripts/create-demo-users.mjs | Erstellt fehlende Demo-Benutzer mit Passwort-Hashes |
