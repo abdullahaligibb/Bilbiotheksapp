@@ -13,6 +13,7 @@ export default async function AdminPage() {
       <p>Signed in as {user.name}.</p>
       <p>Role: {user.role}</p>
       <p><Link href="/admin/books">Manage books and copies</Link></p>
+      <p><Link href="/admin/users">Manage users</Link></p>
       <p><Link href="/">Home</Link></p>
       <LogoutButton />
     </main>

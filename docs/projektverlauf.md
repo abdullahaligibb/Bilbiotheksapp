@@ -180,3 +180,51 @@ Nicht angemeldete Besucher und normale Benutzer können weder die Verwaltungssei
 Für die Präsentation:
 
 "Ich speichere die Buchangaben einmal in books. Die einzelnen Bücher im Regal stehen als Exemplare in copies. Beim Speichern prüft mein Server zuerst die Verwaltungsrolle. Danach prüft er die Eingaben und speichert sie mit SQL. Ein normaler Benutzer darf diese Funktionen auch mit einer direkten Anfrage nicht ausführen."
+
+## 21.10.2026: Benutzerverwaltung
+
+### Was wurde gemacht?
+
+- Unter Administration → Manage users sieht die Verwaltung Name, E-Mail und Rolle aller Benutzer.
+- Add user erstellt ein Konto mit Name, E-Mail, Rolle und Anfangspasswort.
+- Edit erlaubt Änderungen an Name, E-Mail und Rolle. Benutzer-ID und Passwort bleiben gleich.
+- Neue Benutzer können sich direkt auf der vorhandenen Loginseite anmelden.
+- Eine öffentliche Registrierung, Löschfunktion und Passwort-Zurücksetzen sind in diesem Schritt nicht enthalten.
+- Die vorhandenen Tabellen und Pakete reichen aus. Eine neue Migration ist nicht nötig.
+
+### Wie funktioniert das Anlegen?
+
+1. Die Server Action prüft mit requireAdmin die Rolle und danach die Eingaben.
+2. hashPassword aus Better Auth erstellt den Passwort-Hash. Es ist dieselbe Funktion wie im Demo-Skript.
+3. Eine Transaktion erstellt den Benutzer in users und sein Passwortkonto in auth_accounts.
+4. Bei einem Fehler wird die Transaktion zurückgenommen. Es bleibt kein halbfertiges Konto zurück.
+5. Die Seite zeigt nur die sichtbaren Benutzerangaben. Passwort und Hash werden nicht zurückgegeben.
+
+### Wie funktioniert das Bearbeiten?
+
+Der Server prüft Name, E-Mail und Rolle und führt ein UPDATE aus. Doppelte E-Mail-Adressen werden abgelehnt. Bei einer Änderung von E-Mail oder Rolle werden die Sitzungen dieses Benutzers beendet. Danach muss er sich neu anmelden. Beim Ändern der E-Mail wird eine bisherige E-Mail-Bestätigung zurückgesetzt; ein Bestätigungsversand ist weiterhin nicht eingerichtet.
+
+Die eigene Verwaltungsrolle kann nicht entfernt werden. Eine kurze Tabellensperre lässt jeweils nur eine Benutzeränderung zu. Anschliessend prüft der Server die Rolle der handelnden Person nochmals. Dadurch können zwei gleichzeitige Änderungen nicht dazu führen, dass sich zwei Verwaltungspersonen gegenseitig ihre Rechte entziehen.
+
+### Welche Dateien gehören dazu?
+
+- src/app/admin/users/page.tsx: Benutzerübersicht.
+- src/app/admin/users/new/page.tsx: Benutzer anlegen.
+- src/app/admin/users/[id]/page.tsx: Benutzer bearbeiten.
+- src/app/admin/users/user-form.tsx: Eingabefelder und Fehlermeldungen.
+- src/app/admin/users/actions.ts: Eingaben prüfen und Daten speichern.
+- src/lib/user-forms.ts: Datentyp ohne Passwörter und Sitzungsdaten.
+
+### Was wurde getestet?
+
+41 Prüfungen bestanden. Über die echten Browserformulare wurde ein Benutzer angelegt. Name, E-Mail und Rolle wurden geändert; dabei wurde der Benutzer zur Verwaltung und zurück zum Benutzer gemacht. Das neue Konto konnte sich mit dem Anfangspasswort anmelden. Der Passwort-Hash blieb beim Bearbeiten gleich und wurde nicht an die Seite übertragen.
+
+Auch Fehlerfälle wurden geprüft: zu kurzes Passwort, leerer Name, ungültige E-Mail, doppelte E-Mail bei Anlegen und Bearbeiten sowie eine gefälschte Rolle. Nach einem Fehler bleiben die normalen Eingaben erhalten, das Passwortfeld wird geleert. Normale Benutzer und nicht angemeldete Besucher können weder die Seiten öffnen noch die Speicherfunktionen direkt benutzen.
+
+Änderungen an E-Mail und Rolle beenden die Sitzungen. Die eigene E-Mail konnte geändert werden; danach führte die App zur Loginseite und die Anmeldung mit der neuen Adresse funktionierte. Der Versuch, sich die eigene Verwaltungsrolle mit einer veränderten Anfrage zu entfernen, wurde abgelehnt. Ungültige und nicht vorhandene Benutzer-IDs ergaben eine 404-Seite. Im Browser gab es keine JavaScript-Fehler.
+
+Die Testkonten wurden anschliessend entfernt. Name, E-Mail, Rolle und Passwort-Hash der bestehenden Demo-Konten wurden vor und nach dem Test verglichen und blieben gleich. Lint, TypeScript und Produktionsbuild bestanden. Zwei gleichzeitige Rollenänderungen wurden nicht praktisch nachgestellt; dafür ist die Sperre mit erneuter Rechteprüfung im Code vorhanden.
+
+Für die Präsentation:
+
+"Die Anmeldung war schon vorhanden. Jetzt kann die Verwaltung auf der Webseite neue Benutzer anlegen und ihre Angaben bearbeiten. Better Auth erstellt den Passwort-Hash. Mein eigener Code prüft die Verwaltungsrechte und speichert Benutzer und Passwortkonto zusammen in einer Transaktion. Wenn sich die Rolle ändert, wird der Benutzer abgemeldet und muss sich neu anmelden."

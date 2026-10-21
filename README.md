@@ -2,7 +2,7 @@
 
 Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher und einzelne Exemplare hinzufügen und bearbeiten. Suche und Ausleihe folgen später.
+Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Verwaltung kann Bücher, einzelne Exemplare und Benutzer hinzufügen und bearbeiten. Suche und Ausleihe folgen später.
 
 ## Verwendete Werkzeuge
 
@@ -72,7 +72,22 @@ Die Passwörter stehen nur in deiner ignorierten .env.local unter DEMO_USER_PASS
 
 Nach dem Login siehst du deinen Namen, die Rolle und die Testnachricht. Über **Sign out** meldest du dich ab. Nur die Verwaltung kann /admin öffnen. Ein normaler Benutzer wird dort zur Seite **Access denied** weitergeleitet. Ohne Anmeldung führen die Startseite und /admin zur Loginseite.
 
-npm run demo:users legt fehlende Demo-Konten an. Bestehende Konten, Passwörter und Rollen werden dabei nicht überschrieben. Es gibt noch keine öffentliche Registrierung und keine Benutzerverwaltung auf der Webseite.
+npm run demo:users legt fehlende Demo-Konten an. Bestehende Konten, Passwörter und Rollen werden dabei nicht überschrieben. Es gibt weiterhin keine öffentliche Registrierung. Weitere Konten erstellt die Verwaltung auf der Webseite.
+
+## Benutzer verwalten
+
+1. Melde dich als Verwaltung an und öffne **Administration → Manage users**.
+2. Die Übersicht zeigt Name, E-Mail und Rolle der gespeicherten Benutzer.
+3. Mit **Add user** erstellst du ein Konto mit Name, E-Mail, Rolle und Anfangspasswort. Das Passwort muss 12 bis 128 Zeichen haben.
+4. Mit **Edit** kannst du Name, E-Mail und Rolle eines Benutzers ändern. Das Passwort bleibt dabei gleich.
+
+Ein neues Konto kann sich danach über die normale Loginseite anmelden. Passwörter werden mit der vorhandenen Better-Auth-Funktion gehasht. Der Hash steht in auth_accounts; weder Passwort noch Hash werden in der Benutzerübersicht angezeigt. Nach einem Formularfehler muss das Anfangspasswort neu eingegeben werden.
+
+Namen dürfen 1 bis 100 Zeichen lang sein. E-Mail-Adressen werden auf ein einfaches Format und höchstens 254 Zeichen geprüft und klein gespeichert. Eine E-Mail darf nur einmal vorkommen, auch wenn sie anders grossgeschrieben wird. Erlaubte Rollen sind user und admin. Alle Prüfungen finden zusätzlich auf dem Server statt.
+
+Werden E-Mail oder Rolle geändert, beendet der Server die aktuellen Sitzungen dieses Benutzers. Beim Ändern der eigenen E-Mail muss man sich mit der neuen Adresse erneut anmelden. Die eigene Verwaltungsrolle kann man nicht entfernen. So kann die letzte Verwaltungsperson sich nicht aussperren. Falls eine andere Verwaltungsperson die Rolle ändern soll, muss sie das mit ihrem eigenen Konto tun.
+
+Das Speichern läuft in einer Transaktion. Bei einem neuen Konto werden Benutzer und Passwortkonto gemeinsam erstellt. Eine kurze Tabellensperre verhindert, dass zwei Verwaltungsanfragen sich gleichzeitig gegenseitig die Rechte entziehen. Nach dieser Sperre werden die Rechte erneut aus der Datenbank gelesen. Benutzer-IDs und bestehende Ausleihen bleiben beim Bearbeiten erhalten. Eine Löschfunktion, Passwort-Zurücksetzen und eine automatische E-Mail mit Zugangsdaten sind noch nicht eingebaut.
 
 ## Bücher und Exemplare verwalten
 
@@ -114,6 +129,9 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/app/admin/books/ | Übersicht, Buchformular und Formulare für Exemplare |
 | src/app/admin/books/actions.ts | Prüft Rechte und Eingaben und speichert Bücher und Exemplare |
 | src/lib/library-forms.ts | Gemeinsame Datentypen und einfache Prüfungen für IDs und ISBN |
+| src/app/admin/users/ | Benutzerübersicht sowie Formulare zum Anlegen und Bearbeiten |
+| src/app/admin/users/actions.ts | Prüft Rechte, erstellt Passwortkonten und speichert Benutzeränderungen |
+| src/lib/user-forms.ts | Datentyp für die sichtbaren Benutzerangaben |
 | scripts/setup-db.mjs | Liest die SQL-Dateien und führt sie aus |
 | scripts/create-demo-users.mjs | Erstellt fehlende Demo-Benutzer mit Passwort-Hashes |
 | database/setup.sql | Erstellt die Grundlage und die Testnachricht |
