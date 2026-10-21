@@ -426,3 +426,33 @@ Die eigens angelegten Testdaten wurden danach entfernt. Vorhandene Buch-, Exempl
 Für die Präsentation:
 
 "Jeder Benutzer sieht nur seine eigenen Ausleihen und früheren Rückgaben. Die Datenbank erkennt eine überfällige Ausleihe daran, dass die Frist vorbei ist und noch kein Rückgabedatum existiert. Die Verwaltung hat dafür eine eigene Liste und kann dort die Rückgabe erfassen."
+
+## 21.10.2026: Eingaben und Benutzerrechte prüfen
+
+### Was war bereits vorhanden?
+
+- requireUser und requireAdmin schützen Seiten und Speicherfunktionen auf dem Server.
+- Die Formulare prüfen Pflichtfelder, Textlängen, ISBN, Erscheinungsjahr, Passwörter und Rollen.
+- Persönliche Ausleihlisten verwenden die Benutzer-ID aus der Sitzung.
+- SQL-Platzhalter trennen Eingaben von SQL-Befehlen. Eindeutige Datenbankregeln verhindern doppelte Werte und doppelte aktive Ausleihen.
+- Die eigene Verwaltungsrolle kann nicht entfernt werden. Eine Änderung von E-Mail oder Rolle beendet die betroffenen Sitzungen.
+
+### Welche konkreten Lücken wurden gefunden und behoben?
+
+1. Das Benutzerformular akzeptierte manche E-Mail-Adressen, die Better Auth beim Login ablehnt. Das wurde mit einem vorübergehenden Testkonto nachgestellt. validEmail in src/lib/user-forms.ts prüft jetzt ein mit dem installierten Login kompatibles Format. Die Prüfung gilt beim Anlegen und Bearbeiten.
+2. Über den ungenutzten Auth-Endpunkt update-user konnte ein normaler Benutzer seinen eigenen Namen ändern und dabei die Namensprüfung umgehen. Auch ein Name nur aus Leerzeichen wurde angenommen. Der Endpunkt ist jetzt über disabledPaths in src/lib/auth.ts gesperrt. Die Änderung über das Verwaltungsformular bleibt möglich. Diese Lücke erlaubte keine eigene Vergabe der Verwaltungsrolle; das Rollenfeld war bereits geschützt.
+3. Die Grenze von 32 Zeichen für die ISBN-Eingabe stand bisher nur im Browserformular. Der Server prüft diese Länge jetzt vor dem Entfernen von Bindestrichen und Leerzeichen.
+
+Es wurden keine zusätzlichen Pakete, Tabellen oder allgemeinen Berechtigungsframeworks eingebaut. Die neue E-Mail-Prüfung besteht aus kleinen Prüfungen und zwei Textmustern. Die Muster sind etwas technischer, halten aber das Format mit dem bestehenden Login kompatibel. Die Prüfung sagt nicht, ob die Adresse tatsächlich existiert. Bestehende Benutzer, Rollen und Zugangsdaten wurden nicht automatisch verändert.
+
+### Was wurde geprüft?
+
+98 gezielte Prüfungen bestanden: 72 Eingabe- und Berechtigungsprüfungen sowie 26 erneute Prüfungen der Buch- und Exemplarformulare. Ungültige E-Mail-Formate wurden vor dem Speichern abgelehnt. Eine gültige Adresse mit Pluszeichen konnte angelegt werden und sich anmelden. Der gesperrte Profil-Endpunkt konnte weder Namen noch Rolle ändern. Das Verwaltungsformular zum Bearbeiten funktionierte weiterhin.
+
+Alle vorhandenen geschützten Seiten wurden als Gast, normaler Benutzer und Verwaltung aufgerufen. Die erlaubten Seiten waren erreichbar, Verwaltungsseiten für normale Benutzer gesperrt und Gäste wurden zur Loginseite geschickt. Direkte unerlaubte Speicheranfragen, eine fremde Herkunft, ungültige ISBN-Länge, Pflichtfelder, ISBN-Prüfziffern, Erscheinungsjahr und doppelte ISBNs sowie Inventarnummern wurden geprüft. Die öffentliche Registrierung blieb gesperrt.
+
+Die bestehenden Benutzer, Passwortkonten und Bücher blieben laut Prüfsummen unverändert. Die vorhandenen Konten hatten keine mit dem Login unvereinbaren E-Mail-Formate. Nur eigens angelegte Testdaten wurden danach entfernt. Es gab keine JavaScript-Fehler im Browser. Lint, TypeScript und Produktionsbuild bestanden. Die dauerhafte Testsuite folgt wie besprochen am Ende.
+
+Für die Präsentation:
+
+"Ich prüfe Eingaben und Rechte auf dem Server, weil Browserprüfungen und versteckte Buttons umgangen werden können. Die Benutzer-ID kommt aus der Anmeldung. Verwaltungsaktionen prüfen zusätzlich die Rolle. Die Datenbank verhindert ausserdem doppelte Werte und zwei aktive Ausleihen desselben Exemplars."

@@ -17,6 +17,9 @@ export const auth = betterAuth({
   secret: authSecret,
   baseURL: baseURL,
 
+  // User details are edited through our checked admin form.
+  disabledPaths: ['/update-user'],
+
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,

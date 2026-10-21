@@ -84,7 +84,7 @@ npm run demo:users legt fehlende Demo-Konten an. Bestehende Konten, Passwörter 
 
 Ein neues Konto kann sich danach über die normale Loginseite anmelden. Passwörter werden mit der vorhandenen Better-Auth-Funktion gehasht. Der Hash steht in auth_accounts; weder Passwort noch Hash werden in der Benutzerübersicht angezeigt. Nach einem Formularfehler muss das Anfangspasswort neu eingegeben werden.
 
-Namen dürfen 1 bis 100 Zeichen lang sein. E-Mail-Adressen werden auf ein einfaches Format und höchstens 254 Zeichen geprüft und klein gespeichert. Eine E-Mail darf nur einmal vorkommen, auch wenn sie anders grossgeschrieben wird. Erlaubte Rollen sind user und admin. Alle Prüfungen finden zusätzlich auf dem Server statt.
+Namen dürfen 1 bis 100 Zeichen lang sein. E-Mail-Adressen werden auf ein mit dem Login kompatibles Format und höchstens 254 Zeichen geprüft und klein gespeichert. Zum Beispiel werden ein Punkt am Anfang und doppelte Punkte im Namen abgelehnt. Eine E-Mail darf nur einmal vorkommen, auch wenn sie anders grossgeschrieben wird. Erlaubte Rollen sind user und admin. Alle Prüfungen finden zusätzlich auf dem Server statt. Die Formatprüfung bestätigt nicht, dass die E-Mail-Adresse tatsächlich existiert.
 
 Werden E-Mail oder Rolle geändert, beendet der Server die aktuellen Sitzungen dieses Benutzers. Beim Ändern der eigenen E-Mail muss man sich mit der neuen Adresse erneut anmelden. Die eigene Verwaltungsrolle kann man nicht entfernen. So kann die letzte Verwaltungsperson sich nicht aussperren. Falls eine andere Verwaltungsperson die Rolle ändern soll, muss sie das mit ihrem eigenen Konto tun.
 
@@ -171,7 +171,25 @@ Die Übersicht unter /admin/books zeigt die Bücher mit ihrer Anzahl Exemplare. 
 
 Der Server prüft bei jeder Speicheranfrage die Verwaltungsrolle und die Eingaben. Eine angegebene ISBN muss eine gültige ISBN-10 oder ISBN-13 sein. Leerzeichen und Bindestriche werden vor dem Speichern entfernt. Doppelte ISBNs und Inventarnummern werden mit einer Meldung abgelehnt. Eine leere ISBN wird als NULL gespeichert, damit mehrere Bücher ohne ISBN möglich sind. Die Datenbank schützt eindeutige Werte auch bei gleichzeitigen Anfragen. SQL-Platzhalter trennen die Eingaben vom SQL-Befehl.
 
-Die Textfelder haben einfache Längengrenzen: Titel, Autor und Verlag je 300 Zeichen, Kategorie 100, Beschreibung 5000, Inventarnummer 100 und Standort 200. Das Erscheinungsjahr liegt zwischen 1 und 9999. Diese Regeln werden auch auf dem Server geprüft. Vorhandene Daten werden dadurch nicht automatisch verändert.
+Die Textfelder haben einfache Längengrenzen: Titel, Autor und Verlag je 300 Zeichen, Kategorie 100, Beschreibung 5000, Inventarnummer 100 und Standort 200. Die ISBN-Eingabe darf inklusive Leerzeichen und Bindestrichen höchstens 32 Zeichen haben. Das Erscheinungsjahr liegt zwischen 1 und 9999. Diese Regeln werden auch auf dem Server geprüft. Vorhandene Daten werden dadurch nicht automatisch verändert.
+
+## Eingaben und Benutzerrechte
+
+| Funktion | Ohne Anmeldung | Benutzer | Verwaltung |
+| --- | --- | --- | --- |
+| Loginseite öffnen | Ja | Ja | Ja |
+| Bücher suchen und Exemplare ansehen | Nein | Ja | Ja |
+| Ein Exemplar für sich ausleihen | Nein | Ja | Ja |
+| Eigene Ausleihen, Historie und überfällige Ausleihen ansehen | Nein | Ja | Ja |
+| Bücher, Exemplare und Benutzer verwalten | Nein | Nein | Ja |
+| Alle aktiven und überfälligen Ausleihen ansehen | Nein | Nein | Ja |
+| Eine Rückgabe erfassen | Nein | Nein | Ja |
+
+Die Loginseite leitet bereits angemeldete Personen zur Startseite weiter. Jede geschützte Seite und jede Speicherfunktion prüft die Anmeldung oder Verwaltungsrolle auf dem Server. Ein ausgeblendeter Button allein wäre kein Schutz. Die persönliche Ausleihliste verwendet immer die Benutzer-ID aus der Sitzung. Eingaben aus dem Formular können diese ID nicht ersetzen.
+
+Pflichtfelder, Textlängen, ISBN, Erscheinungsjahr, E-Mail, Passwortlänge, erlaubte Rollen und IDs werden vor dem Speichern geprüft. SQL-Platzhalter trennen Eingaben vom SQL-Befehl. Die Datenbank verhindert doppelte E-Mails, ISBNs und Inventarnummern sowie zwei aktive Ausleihen pro Exemplar. Änderungen an der eigenen Verwaltungsrolle sind gesperrt.
+
+Benutzerangaben werden über das geprüfte Verwaltungsformular geändert. Der ungenutzte Better-Auth-Endpunkt /api/auth/update-user ist gesperrt, damit er diese Prüfung nicht umgehen kann. Login, Logout und die bestehenden Konten funktionieren weiter. Eine öffentliche Registrierung bleibt deaktiviert. Next.js prüft bei Server Actions auch die Herkunft einer Anfrage.
 
 ## Was die Befehle machen
 
@@ -208,7 +226,7 @@ setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_s
 | src/app/admin/loans/page.tsx | Verwaltungsübersicht mit Filter für überfällige Exemplare |
 | src/app/admin/loans/return-button.tsx | Rückgabebutton mit Wartezustand und Fehlermeldung |
 | src/app/admin/loans/actions.ts | Prüft Verwaltungsrechte und setzt das Rückgabedatum |
-| src/lib/user-forms.ts | Datentyp für die sichtbaren Benutzerangaben |
+| src/lib/user-forms.ts | Datentyp für sichtbare Benutzerangaben und Prüfung des E-Mail-Formats |
 | scripts/setup-db.mjs | Liest die SQL-Dateien und führt sie aus |
 | scripts/create-demo-users.mjs | Erstellt fehlende Demo-Benutzer mit Passwort-Hashes |
 | database/setup.sql | Erstellt die Grundlage und die Testnachricht |

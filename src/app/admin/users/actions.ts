@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { getPool } from '@/lib/db';
 import { requireAdmin } from '@/lib/require-user';
 import { readText, validId, type FormState } from '@/lib/library-forms';
-import type { ManagedUser } from '@/lib/user-forms';
+import { validEmail, type ManagedUser } from '@/lib/user-forms';
 
 export async function saveUser(id: number | null, previousState: FormState, formData: FormData): Promise<FormState> {
   const admin = await requireAdmin();
@@ -18,7 +18,7 @@ export async function saveUser(id: number | null, previousState: FormState, form
 
   if (id !== null && !validId(id)) return { error: 'Invalid user ID.', values };
   if (!values.name || values.name.length > 100) return { error: 'Enter a name with 1 to 100 characters.', values };
-  if (values.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+  if (!validEmail(values.email)) {
     return { error: 'Enter a valid email address with at most 254 characters.', values };
   }
   if (values.role !== 'user' && values.role !== 'admin') return { error: 'Choose user or admin as the role.', values };

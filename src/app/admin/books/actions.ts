@@ -15,10 +15,11 @@ function databaseError(error: unknown, duplicateMessage: string) {
 
 export async function saveBook(id: number | null, previousState: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
+  const isbnInput = readText(formData, 'isbn');
   const values = {
     title: readText(formData, 'title'),
     author: readText(formData, 'author'),
-    isbn: readText(formData, 'isbn').replace(/[\s-]/g, '').toUpperCase(),
+    isbn: isbnInput.replace(/[\s-]/g, '').toUpperCase(),
     publisher: readText(formData, 'publisher'),
     publication_year: readText(formData, 'publication_year'),
     category: readText(formData, 'category'),
@@ -27,6 +28,7 @@ export async function saveBook(id: number | null, previousState: FormState, form
 
   if (id !== null && !validId(id)) return { error: 'Invalid book ID.', values };
   if (!values.title || !values.author) return { error: 'Title and author are required.', values };
+  if (isbnInput.length > 32) return { error: 'ISBN must have at most 32 characters, including spaces and hyphens.', values };
   if (values.title.length > 300 || values.author.length > 300 || values.publisher.length > 300 || values.category.length > 100 || values.description.length > 5000) {
     return { error: 'Please shorten the text to fit the field limits.', values };
   }
