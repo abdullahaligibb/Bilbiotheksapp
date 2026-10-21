@@ -8,10 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "db:setup": "node scripts/setup-db.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "demo:users": "node scripts/create-demo-users.mjs"
   },
   "dependencies": {
     "@next/env": "^16.4.2",
+    "better-auth": "1.7.12",
     "next": "16.4.2",
     "pg": "^8.23.1",
     "react": "19.3.0",

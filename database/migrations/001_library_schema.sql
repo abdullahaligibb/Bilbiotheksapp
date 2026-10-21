@@ -13,7 +13,7 @@ ALTER TABLE books
 CREATE UNIQUE INDEX IF NOT EXISTS books_isbn_unique ON books (isbn);
 
 -- USERS: people who use the app. These are not database login accounts.
--- The login code will save password hashes here, not plain passwords.
+-- Keep the old password column. Better Auth uses auth_accounts instead.
 CREATE TABLE IF NOT EXISTS users (
   id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name text NOT NULL,

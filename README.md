@@ -2,7 +2,7 @@
 
 Dieses Projekt ist die Grundlage für eine Bibliotheksapp mit Next.js und PostgreSQL.
 
-Die Startseite zeigt **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Tabellen für Bücher, Exemplare, Benutzer und Ausleihen sind vorbereitet. Anmeldung und die neuen Funktionen auf der Webseite folgen später.
+Die App hat eine Anmeldung mit den Rollen Benutzer und Verwaltung. Nach dem Anmelden zeigt die Startseite weiterhin **Datenbankverbindung erfolgreich**. Die Nachricht wird aus der Datenbank gelesen. Die Bibliothekstabellen sind vorbereitet. Die eigentlichen Katalog- und Ausleihfunktionen folgen später.
 
 ## Verwendete Werkzeuge
 
@@ -17,6 +17,7 @@ Stand der erfassten Versionen: 19.10.2026.
 | PostgreSQL | 18.6, Image postgres:18 |
 | Next.js / React | 16.4.2 / 19.3.0 |
 | pg | 8.23.1 |
+| Better Auth | 1.7.12 |
 | TypeScript / ESLint | 5.9.3 / 9.39.5 |
 
 Ich verwende Node.js 24.x. .nvmrc hält die verwendete Version fest. package-lock.json enthält die genauen Paketversionen. Das Docker-Image bleibt bei PostgreSQL 18, kann aber neuere Fehlerkorrekturen dieser Version erhalten.
@@ -43,6 +44,9 @@ Copy-Item .env.local.example .env.local
 - In .env ersetzt du POSTGRES_PASSWORD durch ein eigenes lokales Passwort aus Buchstaben und Ziffern.
 - In .env.local trägst du dasselbe Passwort in DATABASE_URL ein.
 - Benutzer bibliothek_app, Datenbank bibliothek und localhost:5432 bleiben wie im Beispiel.
+- BETTER_AUTH_SECRET braucht einen zufälligen Wert mit mindestens 32 Zeichen. Er schützt die Anmeldung. Du kannst ihn mit `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` erzeugen und lokal eintragen.
+- BETTER_AUTH_URL ist hier http://localhost:3000. Öffne die App deshalb über localhost. Wenn du einen anderen Host oder Port nutzt, passe diese Adresse ebenfalls an und starte Next.js neu.
+- DEMO_USER_PASSWORD und DEMO_ADMIN_PASSWORD sind zwei unterschiedliche lokale Passwörter mit jeweils 12 bis 128 Zeichen.
 
 .env und .env.local enthalten echte Zugangsdaten und werden nicht mit Git geteilt. Die Beispieldateien enthalten keine echten Passwörter.
 
@@ -51,18 +55,33 @@ Danach:
 ```powershell
 docker compose up -d --wait
 npm.cmd run db:setup
+npm.cmd run demo:users
 npm.cmd run dev
 ```
 
-Öffne die Adresse aus dem Terminal, normalerweise http://localhost:3000.
+Öffne http://localhost:3000/login. Die bereits eingerichtete Arbeitskopie enthält die neuen lokalen Einstellungen und Demo-Benutzer schon. Die vorhandenen Datenbank-Zugangsdaten wurden nicht geändert.
+
+## Anmelden und abmelden
+
+| Konto | E-Mail | Rolle |
+| --- | --- | --- |
+| Benutzer | user@example.test | user |
+| Verwaltung | admin@example.test | admin |
+
+Die Passwörter stehen nur in deiner ignorierten .env.local unter DEMO_USER_PASSWORD und DEMO_ADMIN_PASSWORD. Kopiere sie nicht in die Dokumentation oder ins Repository.
+
+Nach dem Login siehst du deinen Namen, die Rolle und die Testnachricht. Über **Sign out** meldest du dich ab. Nur die Verwaltung kann /admin öffnen. Ein normaler Benutzer wird dort zur Seite **Access denied** weitergeleitet. Ohne Anmeldung führen die Startseite und /admin zur Loginseite.
+
+npm run demo:users legt fehlende Demo-Konten an. Bestehende Konten, Passwörter und Rollen werden dabei nicht überschrieben. Es gibt noch keine öffentliche Registrierung und keine Benutzerverwaltung auf der Webseite.
 
 ## Was die Befehle machen
 
 - docker compose up startet PostgreSQL im Hintergrund und wartet, bis die Datenbank bereit ist.
-- npm run db:setup führt database/setup.sql und danach database/migrations/001_library_schema.sql aus. Vorhandene Daten bleiben erhalten. Es zeigt keine Datensätze im Terminal an.
+- npm run db:setup führt database/setup.sql, 001_library_schema.sql und 002_authentication.sql in dieser Reihenfolge aus. Die letzten beiden Dateien stehen unter database/migrations. Vorhandene Daten bleiben erhalten. Es zeigt keine Datensätze im Terminal an.
+- npm run demo:users erstellt die beiden lokalen Demo-Konten. Better Auth erstellt die Passwort-Hashes.
 - npm run dev startet die Webseite und den Next.js-Server auf dem Rechner.
 
-Die erste SQL-Datei erstellt die Testnachricht und die einfache Buchtabelle. Die zweite erweitert das Datenmodell. Sie verwendet eine Transaktion: Entweder wird diese Erweiterung vollständig ausgeführt oder bei einem Fehler zurückgenommen. Beide Dateien können erneut ausgeführt werden. Weitere Migrationsdateien werden noch nicht automatisch erkannt.
+setup.sql erstellt die Testnachricht und die einfache Buchtabelle. 001_library_schema.sql erweitert das Bibliotheksmodell. 002_authentication.sql ergänzt die Anmeldung. Jede Erweiterung verwendet eine Transaktion: Entweder wird sie vollständig ausgeführt oder bei einem Fehler zurückgenommen. Die Dateien können erneut ausgeführt werden. Weitere Migrationsdateien werden noch nicht automatisch erkannt.
 
 ## Ordner und Dateien
 
@@ -71,9 +90,17 @@ Die erste SQL-Datei erstellt die Testnachricht und die einfache Buchtabelle. Die
 | src/app/page.tsx | Liest die Testnachricht und zeigt sie an |
 | src/app/layout.tsx | Gemeinsamer HTML-Rahmen der Seite |
 | src/lib/db.ts | Verwaltet die Verbindung zur Datenbank |
+| src/lib/auth.ts | Einstellungen von Better Auth und Rollenfeld |
+| src/lib/require-user.ts | Prüft Anmeldung und Verwaltungsrolle auf dem Server |
+| src/lib/auth-client.ts | Verbindung der Login-Buttons zu Better Auth |
+| src/app/login/ | Loginseite und Formular |
+| src/app/api/auth/[...all]/route.ts | Empfängt Login- und Logout-Anfragen |
+| src/app/admin/page.tsx | Einfache geschützte Seite für die Verwaltung |
 | scripts/setup-db.mjs | Liest die SQL-Dateien und führt sie aus |
+| scripts/create-demo-users.mjs | Erstellt fehlende Demo-Benutzer mit Passwort-Hashes |
 | database/setup.sql | Erstellt die Grundlage und die Testnachricht |
 | database/migrations/001_library_schema.sql | Ergänzt die Bibliothekstabellen |
+| database/migrations/002_authentication.sql | Ergänzt die Tabellen für die Anmeldung |
 | compose.yaml | Einstellungen für PostgreSQL in Docker |
 | docs/projektverlauf.md | Entscheidungen und Notizen für die Präsentation |
 
@@ -86,12 +113,19 @@ Die erste SQL-Datei erstellt die Testnachricht und die einfache Buchtabelle. Die
 | users | Benutzer mit E-Mail, Passwort-Hash und Rolle |
 | loans | Ausleihen mit Benutzer, Exemplar und Datumsangaben |
 | setup_check | Die Testnachricht für den Verbindungstest |
+| auth_accounts | Login-Methode und Passwort-Hash eines Benutzers |
+| auth_sessions | Aktuelle Anmeldungen mit Ablaufdatum |
+| auth_verifications | Vorbereitung für Bestätigungsvorgänge der Auth-Bibliothek |
 
 Ein Buch kann mehrere Exemplare haben. Eine Ausleihe gehört zu einem Benutzer und einem Exemplar. Ein Exemplar darf nur eine aktive Ausleihe haben.
 
 Die neuen Buchfelder sind vorerst optional, damit bisherige Formulare weiter funktionieren. books.borrowed bleibt für den alten Übungscode bestehen. Im geplanten Ausleihsystem wird die Verfügbarkeit aus loans berechnet.
 
-password_hash ist erst die vorbereitete Spalte. Die Anmeldung und das Erstellen sicherer Passwort-Hashes fehlen noch. Die Rollen heissen user und admin. Das sind Rollen in der App, keine PostgreSQL-Konten.
+Better Auth speichert Passwort-Hashes in auth_accounts.password_hash. Die frühere Spalte users.password_hash bleibt erhalten, wird für neue Anmeldungen aber nicht verwendet und darf leer sein. Die vorhandenen Benutzer-IDs bleiben bestehen, damit die Verbindungen zu loans weiter passen.
+
+Die Rollen heissen user und admin. Das sind Rollen in der App, keine PostgreSQL-Konten. Die Rolle kommt vom Server. Ein Benutzer kann sie nicht im Loginformular oder mit einer Anfrage selbst ändern. Für spätere Verwaltungsaktionen muss requireAdmin am Anfang der jeweiligen Serverfunktion aufgerufen werden.
+
+Die Anmeldung gilt bis zu acht Stunden. Better Auth verwaltet das Sitzungscookie und prüft die Sitzung in PostgreSQL. Das Cookie ist HttpOnly und verwendet SameSite=Lax. Die App liest die Rolle bei geschützten Seiten aus der geprüften Sitzung. Wiederholte Login-Anfragen werden begrenzt. Diese Begrenzung läuft für das lokale Projekt im Speicher eines Servers; mehrere Server würden einen gemeinsamen Speicher benötigen.
 
 ## Verbindungstest selbst ausprobieren
 
@@ -140,6 +174,7 @@ Für einen lokalen Start des fertigen Builds verwendest du npm.cmd run start. St
 - @types/pg hilft TypeScript beim Prüfen des Datenbankcodes.
 - server-only verhindert, dass Datenbankcode in Browser-Komponenten importiert wird.
 - @next/env lädt die Umgebungsdateien für das Setup-Skript.
+- better-auth übernimmt Passwort-Hashes, Login, Logout und Sitzungen. Die Bibliothek läuft in der App und verwendet die PostgreSQL-Datenbank.
 - ESLint prüft typische Fehler im Code.
 
 ## Häufige Probleme

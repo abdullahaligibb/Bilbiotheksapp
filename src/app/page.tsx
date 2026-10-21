@@ -1,4 +1,7 @@
 import { getPool } from '@/lib/db';
+import Link from 'next/link';
+import { requireUser } from '@/lib/require-user';
+import LogoutButton from './logout-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +11,8 @@ type SetupMessage = {
 };
 
 export default async function Home() {
+  const user = await requireUser();
+
   // 1. Get the database connection.
   const database = getPool();
 
@@ -24,6 +29,10 @@ export default async function Home() {
   return (
     <main>
       <h1>Bibliotheksapp</h1>
+      <p>Signed in as {user.name}.</p>
+      <p>Role: {user.role}</p>
+      {user.role === 'admin' && <p><Link href="/admin">Administration</Link></p>}
+      <LogoutButton />
       {paragraphs}
     </main>
   );

@@ -22,6 +22,11 @@ try {
   const libraryFile = new URL('../database/migrations/001_library_schema.sql', import.meta.url);
   const librarySql = await readFile(libraryFile, 'utf8');
   await pool.query(librarySql);
+
+  // Add the tables used for sign-in and sessions.
+  const authFile = new URL('../database/migrations/002_authentication.sql', import.meta.url);
+  const authSql = await readFile(authFile, 'utf8');
+  await pool.query(authSql);
 } finally {
   // Close the connections, even if a query fails.
   await pool.end();
