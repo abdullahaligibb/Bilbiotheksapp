@@ -3,6 +3,14 @@ export const metadata: Metadata = {
   title: 'Bibliotheksapp',
   description: 'Next.js und PostgreSQL: Verbindungstest meiner Bibliotheksapp.',
 };
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="de"><body>{children}</body></html>;
+type LayoutProperties = {
+  readonly children: React.ReactNode;
+};
+
+export default function RootLayout(properties: LayoutProperties) {
+  return (
+    <html lang="de">
+      <body>{properties.children}</body>
+    </html>
+  );
 }
